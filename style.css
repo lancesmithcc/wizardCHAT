@@ -41,6 +41,16 @@ body.vibrational-pulse {
     pointer-events: none;
     z-index: -1;
     opacity: 0.3;
+    animation: astrological-rotation 120s linear infinite;
+}
+
+@keyframes astrological-rotation {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
 }
 
 .zodiac-symbol {
@@ -48,9 +58,18 @@ body.vibrational-pulse {
     font-size: 24px;
     color: var(--aurora-color1, #4a00e0);
     text-shadow: 0 0 8px var(--aurora-color1, #4a00e0);
-    animation: aurora-text-zodiac 15s ease infinite alternate;
+    animation: aurora-text-zodiac 15s ease infinite alternate, counter-rotate 120s linear infinite;
     user-select: none;
     transform: translate(-50%, -50%);
+}
+
+@keyframes counter-rotate {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(-360deg);
+    }
 }
 
 @keyframes aurora-text-zodiac {

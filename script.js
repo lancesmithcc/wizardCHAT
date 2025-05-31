@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mystical & Spiritual Religious
         '💎', '🔮', '🕉️', '☯️', '🙏', '✝️', '☪️', '🔯', '☮️', '🕎', '⚛️', '🧿', '📿', '⛩️',
         '🕯️', '🔥', '👼', '😇', '🧘', '🤲', '🛐', '☦️', '✞', '✟', '✠', '✡', '☬', '☸', '🔱',
-        // Zodiac & Astrology
-        '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '⛎',
+        // Astrology (zodiac signs now in permanent wheel)
+        '⛎', // Ophiuchus (13th sign)
         // Nature & Life Magic
         '🌈', '🦋', '🕊️', '🌸', '🌺', '🌻', '🌷', '🌹', '🍀', '🌿', '🌱', '🌵', '🌾',
         '🌳', '🌲', '🌴', '🍃', '🦢', '🐝', '🦄', '🧚', '🧜', '🦅', '🦆', '🐚', '🪷',
@@ -220,12 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function createAstrologicalWheel() {
         if (!astrologicalWheel) return;
         
-        const zodiacSigns = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+        // HTML entity zodiac symbols instead of emojis
+        const zodiacSigns = ['&Aries;', '&Taurus;', '&Gemini;', '&Cancer;', '&Leo;', '&Virgo;', '&Libra;', '&Scorpius;', '&Sagittarius;', '&Capricorn;', '&Aquarius;', '&Pisces;'];
         
         zodiacSigns.forEach((sign, index) => {
             const symbol = document.createElement('div');
             symbol.className = 'zodiac-symbol';
-            symbol.textContent = sign;
+            symbol.innerHTML = sign; // Use innerHTML for HTML entities
             
             const angle = index * 30; // 30 degrees apart
             const radius = 45; // 45% of container
