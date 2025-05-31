@@ -352,25 +352,43 @@ body.vibrational-pulse {
     width: 90%;
 }
 
+.title-area {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#wizard-title-ascii {
+    font-family: monospace;
+    font-size: clamp(0.5rem, 2.5vw, 1.2rem); /* Responsive scaling */
+    line-height: 1;
+    animation: aurora-text-wizard 33s ease infinite alternate;
+    white-space: pre;
+    margin: 0;
+    overflow-x: auto;
+    color: var(--aurora-color1);
+    text-shadow: 0 0 5px var(--aurora-color1);
+}
+
 .wizard-area {
-    display: flex; /* Use flexbox for horizontal layout */
-    align-items: center; /* Vertically align items in the middle */
-    justify-content: center; /* Center the wizard and bubble if they don't take full width */
-    gap: 20px; /* Add some space between the wizard and the bubble */
+    display: flex;
+    flex-direction: column; /* Stack wizard above speech bubble */
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
     margin-bottom: 20px;
-    width: 100%; /* Allow wizard area to take more width if needed */
-    max-width: 600px; /* Or adjust as preferred */
+    width: 100%;
+    max-width: 600px;
 }
 
 #wizard-ascii {
     font-family: monospace;
-    font-size: 12px; /* Adjust as needed */
+    font-size: clamp(8px, 1.5vw, 16px); /* Responsive scaling for wizard */
     line-height: 1;
-    /* color: #0f0; Green color for the wizard */
-    /* text-shadow: 0 0 5px #0f0; */
     white-space: pre;
     animation: aurora-text-wizard 33s ease infinite alternate;
-    /* margin-bottom: 10px; Removed as gap is used in flex container */
+    margin: 0;
+    text-align: center;
 }
 
 @keyframes aurora-text-wizard {
@@ -424,7 +442,7 @@ body.vibrational-pulse {
     border: 1px solid var(--aurora-color3);
     margin-right: 10px;
     background-color: #101010;
-    color: #fff; /* User typing text will be white */
+    color: #fff !important; /* User typing text will be white */
     font-family: 'Doto', sans-serif;
     resize: none;
     height: 40px;filter:rotate(2deg);
@@ -481,7 +499,7 @@ body.vibrational-pulse {
 .user-message {
     /* color: #7f7; */
     text-align: right;
-    color:#555;
+    color:#f1f1f1;
     animation: aurora-text-user 10s ease infinite alternate;
     margin-left: auto; /* Push user messages to the right */
     max-width: 70%; /* Prevent user messages from being too wide */
