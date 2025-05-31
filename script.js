@@ -127,6 +127,76 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(-3, Math.min(3, positiveScore - negativeScore));
     }
 
+    // Vibrational color mapping
+    const vibrationalColors = {
+        // Highly positive (love, spiritual, transcendent)
+        3: '#ff69b4',  // Hot pink for love/highest vibration
+        2: '#9966ff',  // Purple for spiritual/mystical
+        1: '#4169e1',  // Royal blue for positive/peaceful
+        0: '#000000',  // Black for neutral
+        '-1': '#ff4500', // Orange-red for mild negativity
+        '-2': '#dc143c', // Crimson for strong negativity  
+        '-3': '#8b0000'  // Dark red for lowest vibration
+    };
+
+    // Advanced vibrational analysis with color themes
+    function getVibrationalColor(vibrationalLevel, messageText) {
+        const lowerText = messageText.toLowerCase();
+        
+        // Check for specific high-vibe themes
+        if (lowerText.includes('love') || lowerText.includes('divine') || lowerText.includes('blessed')) {
+            return '#ff1493'; // Deep pink for love
+        }
+        if (lowerText.includes('spiritual') || lowerText.includes('sacred') || lowerText.includes('enlighten')) {
+            return '#9370db'; // Medium purple for spiritual
+        }
+        if (lowerText.includes('peace') || lowerText.includes('harmony') || lowerText.includes('zen')) {
+            return '#00ced1'; // Dark turquoise for peace
+        }
+        if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate')) {
+            return '#ffd700'; // Gold for joy
+        }
+        if (lowerText.includes('gratitude') || lowerText.includes('thank') || lowerText.includes('appreciate')) {
+            return '#32cd32'; // Lime green for gratitude
+        }
+        
+        // Check for specific low-vibe themes
+        if (lowerText.includes('hate') || lowerText.includes('evil') || lowerText.includes('curse')) {
+            return '#8b0000'; // Dark red for hate
+        }
+        if (lowerText.includes('fear') || lowerText.includes('terror') || lowerText.includes('nightmare')) {
+            return '#2f2f2f'; // Dark gray for fear
+        }
+        if (lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('furious')) {
+            return '#b22222'; // Fire brick for anger
+        }
+        
+        // Default to vibrational level color
+        return vibrationalColors[vibrationalLevel.toString()] || '#000000';
+    }
+
+    // Set background vibe color and start pulsing
+    function setVibrationalBackground(vibrationalLevel, messageText) {
+        const vibeColor = getVibrationalColor(vibrationalLevel, messageText);
+        
+        // Set CSS custom property for the vibe color
+        document.documentElement.style.setProperty('--vibe-color', vibeColor);
+        
+        // Add pulsing class to body
+        document.body.classList.add('vibrational-pulse');
+        
+        // Remove any existing timeout
+        if (window.vibrationalTimeout) {
+            clearTimeout(window.vibrationalTimeout);
+        }
+    }
+
+    // Clear vibrational background
+    function clearVibrationalBackground() {
+        document.body.classList.remove('vibrational-pulse');
+        document.documentElement.style.setProperty('--vibe-color', '#000000');
+    }
+
     // Clear existing symbols
     function clearVibrationalSymbols() {
         if (!vibrationalSymbols) return;
@@ -405,6 +475,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Analyze vibrational energy and spawn symbols
             const vibrationalLevel = analyzeVibrationalEnergy(messageText);
             spawnVibrationalSymbols(vibrationalLevel, messageText.length);
+            
+            // Set background color based on vibrational energy
+            setVibrationalBackground(vibrationalLevel, messageText);
             
             appendMessage(messageText, 'user-message');
             chatInput.value = '';

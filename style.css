@@ -11,6 +11,24 @@ body {
     overflow: hidden; /* Prevent scrollbars from animation */
     animation: aurora-bg 20s ease infinite alternate;
     position: relative;
+    transition: background-color 2s ease;
+}
+
+/* Dynamic vibrational background pulsing */
+body.vibrational-pulse {
+    animation: vibrational-background-pulse 4s ease-in-out infinite, aurora-bg 20s ease infinite alternate;
+}
+
+@keyframes vibrational-background-pulse {
+    0% {
+        background-color: #000;
+    }
+    50% {
+        background-color: var(--vibe-color, #000);
+    }
+    100% {
+        background-color: #000;
+    }
 }
 
 .stars-background {
