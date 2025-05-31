@@ -1,0 +1,405 @@
+body {
+    font-family: 'Doto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #000; /* Black background */
+    color: #fff; /* Default text white, will be overridden by aurora for specific elements */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden; /* Prevent scrollbars from animation */
+    animation: aurora-bg 20s ease infinite alternate;
+    position: relative;
+}
+
+/* Floating stars background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, #8B00FF, transparent),
+        radial-gradient(2px 2px at 40px 70px, #008B8B, transparent),
+        radial-gradient(1px 1px at 90px 40px, #9932CC, transparent),
+        radial-gradient(1px 1px at 130px 80px, #20B2AA, transparent),
+        radial-gradient(2px 2px at 160px 30px, #8B00FF, transparent),
+        radial-gradient(1px 1px at 200px 100px, #008B8B, transparent),
+        radial-gradient(2px 2px at 250px 50px, #9932CC, transparent),
+        radial-gradient(1px 1px at 300px 20px, #20B2AA, transparent),
+        radial-gradient(1px 1px at 350px 90px, #8B00FF, transparent),
+        radial-gradient(2px 2px at 400px 60px, #008B8B, transparent);
+    background-repeat: repeat;
+    background-size: 450px 150px;
+    animation: float-stars 144s linear infinite;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes float-stars {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(-10px, -5px) rotate(120deg); }
+    66% { transform: translate(5px, -10px) rotate(240deg); }
+    100% { transform: translate(0, 0) rotate(360deg); }
+}
+
+/* Twinkling stars layer */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(1px 1px at 50px 50px, #ffffff, transparent),
+        radial-gradient(1px 1px at 150px 120px, #8B00FF, transparent),
+        radial-gradient(1px 1px at 280px 80px, #008B8B, transparent),
+        radial-gradient(1px 1px at 380px 40px, #ffffff, transparent),
+        radial-gradient(1px 1px at 100px 200px, #20B2AA, transparent),
+        radial-gradient(1px 1px at 320px 180px, #9932CC, transparent),
+        radial-gradient(1px 1px at 180px 60px, #ffffff, transparent),
+        radial-gradient(1px 1px at 420px 140px, #8B00FF, transparent);
+    background-repeat: repeat;
+    background-size: 500px 250px;
+    animation: twinkle-stars 8s ease-in-out infinite alternate;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes twinkle-stars {
+    0% { 
+        opacity: 0.2; 
+        transform: scale(1) translate(0, 0);
+    }
+    25% { 
+        opacity: 0.6; 
+        transform: scale(1.1) translate(2px, -3px);
+    }
+    50% { 
+        opacity: 0.3; 
+        transform: scale(0.9) translate(-1px, 2px);
+    }
+    75% { 
+        opacity: 0.7; 
+        transform: scale(1.2) translate(3px, 1px);
+    }
+    100% { 
+        opacity: 0.2; 
+        transform: scale(1) translate(0, 0);
+    }
+}
+
+@keyframes aurora-bg {
+    0% {
+        /* Using text-shadow for aurora effect on text/elements, not background */
+        /* background: linear-gradient(45deg, #4a00e0, #8e2de2, #24c6dc, #514a9d); */
+        /* background-size: 400% 400%; */
+        /* background-position: 0% 50%; */
+        --aurora-color1: #4a00e0; /* Purple */
+        --aurora-color3: #24c6dc; /* Aqua */
+        --aurora-color2: #8e2de2; /* Violet */
+    }
+    33% {
+        --aurora-color1: #8e2de2; /* Violet */
+        --aurora-color2: #24c6dc; /* Aqua */
+        --aurora-color3: #514a9d; /* Deep Blue/Purple */
+    }
+    66% {
+        --aurora-color3: #514a9d; /* Deep Blue/Purple */
+        --aurora-color2: #24c6dc; /* Aqua */
+        --aurora-color3: #4a00e0; /* Purple */
+    }
+    100% {
+        --aurora-color1: #4a00e0; /* Purple */
+        --aurora-color3: #24c6dc; /* Aqua */
+        --aurora-color2: #8e2de2; /* Violet */
+    }
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background:none; /* Slightly lighter than pitch black for depth */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    max-width: 800px;
+    width: 90%;
+}
+
+.wizard-area {
+    margin-bottom: 20px;
+    width: 70%;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+#wizard-ascii {
+    font-family: monospace;
+    font-size: 12px; /* Adjust as needed */
+    line-height: 1;
+    /* color: #0f0; Green color for the wizard */
+    /* text-shadow: 0 0 5px #0f0; */
+    white-space: pre;
+    animation: aurora-text-wizard 33s ease infinite alternate;
+    flex-shrink: 0; /* Prevent wizard from shrinking */
+    margin-top: 5px; /* Align with top of speech bubble */
+}
+
+@keyframes aurora-text-wizard {
+    0% { color: var(--aurora-color1); text-shadow: 0 0 3px var(--aurora-color1), 0 0 5px var(--aurora-color2); }
+    50% { color: var(--aurora-color2); text-shadow: 0 0 3px var(--aurora-color2), 0 0 5px var(--aurora-color3); }
+    100% { color: var(--aurora-color3); text-shadow: 0 0 3px var(--aurora-color3), 0 0 5px var(--aurora-color1); }
+}
+
+.chat-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 80%;
+    transform:rotate(2deg);
+}
+
+#mic-button {
+    background: none;
+    border: 1px solid var(--aurora-color2);
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* color: var(--aurora-color1); Removed text color as it's icon only */
+}
+
+#mic-button svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--aurora-color1); /* Initial fill */
+    transition: fill 5s ease;
+}
+
+#mic-button.recording svg {
+    fill: #f557e5; /* Red when recording - distinct from aurora */
+}
+
+#mic-button.recording {
+    border-color: #6005b0;  /* Red when recording - distinct from aurora */
+}
+
+#chat-input {
+    flex-grow: 1;
+    padding: 20px;
+    border-radius: 33px 0px 33px 33px;
+    border: 1px solid var(--aurora-color3);
+    margin-right: 10px;
+    background-color: #101010;
+    color: #fff; /* User typing text will be white */
+    font-family: 'Doto', sans-serif;
+    resize: none;
+    height: 40px;filter:rotate(2deg);
+}
+
+#chat-input::placeholder {
+    /* color: #aaa; */
+    animation: aurora-text-placeholder 10s ease infinite alternate;
+}
+
+@keyframes aurora-text-placeholder {
+    0% { color: var(--aurora-color3); }
+    50% { color: var(--aurora-color1); }
+    100% { color: var(--aurora-color2); }
+}
+
+#send-button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: none;
+    /* background-color: #8e2de2; */
+    /* color: #fff; */
+    cursor: pointer;
+    font-family: 'Doto', sans-serif;
+    font-size: 33px;
+    animation: aurora-button-send 10s ease infinite alternate;
+}
+
+@keyframes aurora-button-send {
+    0% { background-color:#000;color:aquamarine;}
+    50% { background-color:#000;;color:#514a9d;}
+    100% { background-color:#000;;color:#24c6dc;}
+}
+
+.chat-log {
+    width: 70%;
+    max-height: 300px;
+    overflow-y: auto;
+    border: none;
+    padding: 10px;
+    border-radius: 33px 33px 0px 33px;
+    text-align: left;
+    background:none;
+    padding:20px;;
+    transform:rotate(2deg);
+}
+
+.chat-log p {
+    margin: 5px 0;
+    line-height: 1.4;
+}
+
+.user-message {
+    /* color: #7f7; */
+    text-align: right;
+    animation: aurora-text-user 10s ease infinite alternate;
+    margin-left: auto; /* Push user messages to the right */
+    max-width: 70%; /* Prevent user messages from being too wide */
+    word-wrap: break-word;
+}
+
+@keyframes aurora-text-user {
+    0% { color: var(--aurora-color1); }
+    50% { color: var(--aurora-color2); }
+    100% { color: var(--aurora-color3); }
+}
+
+.wizard-message {
+    /* This class might still be used for errors in the main log, or can be deprecated if all wizard actual responses go to bubble */
+    /* color: #0ff; */
+    animation: aurora-text-wizard-response 33s ease infinite alternate;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+@keyframes aurora-text-wizard-response {
+    0% { color: var(--aurora-color2); }
+    50% { color: var(--aurora-color3); }
+    100% { color: var(--aurora-color1); }
+}
+
+/* Style for dimmed processing message */
+.user-message.dimmed {
+    color: #aaa;
+    font-style: italic;
+}
+
+/* Basic Wizard Animation Placeholder */
+#wizard-ascii.speaking {
+    animation: wizard-speak 3s infinite alternate, wizard-heartbeat 7s infinite;
+}
+
+@keyframes wizard-speak {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-2px); }
+}
+
+/* Heartbeat color animation between purple and teal */
+@keyframes wizard-heartbeat {
+    0% { 
+        color: #8B00FF; /* Vibrant purple */
+        text-shadow: 0 0 10px #8B00FF, 0 0 20px #8B00FF, 0 0 30px #8B00FF;
+        transform: scale(1);
+    }
+    25% { 
+        color: #9932CC; /* Medium purple */
+        text-shadow: 0 0 8px #9932CC, 0 0 16px #9932CC, 0 0 24px #9932CC;
+        transform: scale(1.02);
+    }
+    50% { 
+        color: #008B8B; /* Dark teal */
+        text-shadow: 0 0 10px #008B8B, 0 0 20px #008B8B, 0 0 30px #008B8B;
+        transform: scale(1);
+    }
+    75% { 
+        color: #20B2AA; /* Light sea green */
+        text-shadow: 0 0 8px #20B2AA, 0 0 16px #20B2AA, 0 0 24px #20B2AA;
+        transform: scale(1.02);
+    }
+    100% { 
+        color: #8B00FF; /* Back to vibrant purple */
+        text-shadow: 0 0 10px #8B00FF, 0 0 20px #8B00FF, 0 0 30px #8B00FF;
+        transform: scale(1);
+    }
+}
+
+.wizard-speech {
+    min-height: 50px;margin-top:20px;
+    flex: 1; /* Take remaining space after wizard */
+    padding: 15px;
+    border-radius: 33px 33px 33px 0px; /* Adjusted for left positioning */
+    background:#0e0e0e;
+    border: 1px solid var(--aurora-color2);
+    animation: aurora-text-wizard-response 33s ease infinite alternate;
+    text-align: left;
+    font-size: 0.9em;
+    line-height: 1.4;
+    box-shadow: 0 0 10px var(--aurora-color3);
+    transform: rotate(1deg); /* Slightly less rotation */
+    transition: all 0.3s ease;
+}
+
+/* Typing effect for wizard responses */
+.wizard-speech.typing {
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 2px solid var(--aurora-color1);
+    animation: blink-caret 0.8s infinite, aurora-text-wizard-response 33s ease infinite alternate;
+}
+
+.wizard-speech.typing::after {
+    content: '';
+    animation: blink-caret 0.8s infinite;
+}
+
+@keyframes blink-caret {
+    from, to { 
+        border-right-color: var(--aurora-color1);
+    }
+    50% { 
+        border-right-color: transparent;
+    }
+}
+
+/* Heartbeat animation for speech bubble when wizard is speaking */
+#wizard-ascii.speaking + .wizard-speech {
+    animation: aurora-text-wizard-response 33s ease infinite alternate, speech-bubble-heartbeat 5s infinite;
+}
+
+@keyframes speech-bubble-heartbeat {
+    0% { 
+        border-color: #8B00FF;
+        box-shadow: 0 0 15px #8B00FF, 0 0 25px #8B00FF;
+        transform: rotate(1deg) scale(1);
+    }
+    25% { 
+        border-color: #9932CC;
+        box-shadow: 0 0 12px #9932CC, 0 0 20px #9932CC;
+        transform: rotate(1deg) scale(1.01);
+    }
+    50% { 
+        border-color: #008B8B;
+        box-shadow: 0 0 15px #008B8B, 0 0 25px #008B8B;
+        transform: rotate(1deg) scale(1);
+    }
+    75% { 
+        border-color: #20B2AA;
+        box-shadow: 0 0 12px #20B2AA, 0 0 20px #20B2AA;
+        transform: rotate(1deg) scale(1.01);
+    }
+    100% { 
+        border-color: #8B00FF;
+        box-shadow: 0 0 15px #8B00FF, 0 0 25px #8B00FF;
+        transform: rotate(1deg) scale(1);
+    }
+} 

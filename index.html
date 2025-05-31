@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wizard CHAT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="wizard-area">
+            <pre id="wizard-ascii">
+         ,/   *
+      _,'/_   |
+      `(")' ,'/
+   _ _,-H-./ /
+   \_\_\.   /
+     )" |  (
+  __/   H   \__
+  \    /|\    /
+   `--'|||`--'
+      ==^==
+            </pre>
+            <div id="wizard-speech-bubble" class="wizard-speech"></div>
+        </div>
+        <div class="chat-controls">
+            <button id="mic-button">
+                <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24px" height="24px"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" d="M21,14 L19,14 L19,10 L21,10 L21,14 Z M17,16 L15,16 L15,8 L17,8 L17,16 Z M13,19 L11,19 L11,5 L13,5 L13,19 Z M9,16 L7,16 L7,8 L9,8 L9,16 Z M5,14 L3,14 L3,10 L5,10 L5,14 Z"></path> </g></svg>
+            </button>
+            <textarea id="chat-input" placeholder="Speak or type thy query..."></textarea>
+            <button id="send-button">✨</button>
+        </div>
+        <div class="chat-log" id="user-chat-log">
+            <!-- Chat messages will appear here -->
+        </div>
+    </div>
+    <!-- LOCAL SCRIPT - CRITICAL: Must be loaded after FAL SDK and after DOM elements are defined -->
+    <script src="script.js"></script>
+</body>
+</html> 
