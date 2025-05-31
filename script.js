@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function speakWizardResponse(text) {
         try {
             console.log('Requesting TTS for text:', text);
-            const response = await fetch('/api/fal-kokoro-tts', {
+            const response = await fetch('/.netlify/functions/fal-kokoro-tts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const audioDataUrl = await blobToDataUrl(audioBlob);
                         
-                        const response = await fetch('/api/fal-whisper-stt', {
+                        const response = await fetch('/.netlify/functions/fal-whisper-stt', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleWizardSpeaking(true);
 
             try {
-                const response = await fetch('/api/deepseek-chat', {
+                const response = await fetch('/.netlify/functions/deepseek-chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
