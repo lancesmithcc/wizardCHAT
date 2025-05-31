@@ -5,11 +5,106 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendButton = document.getElementById('send-button');
     const userChatLog = document.getElementById('user-chat-log');
     const wizardSpeechBubble = document.getElementById('wizard-speech-bubble');
+    const vibrationalSymbols = document.querySelector('.vibrational-symbols');
 
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
     let recordingTimeout;
+
+    // Vibrational symbol arrays
+    const positiveSymbols = [
+        '☀️', '🌟', '✨', '💎', '🔮', '🕉️', '☯️', '🙏', 
+        '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓',
+        '🌙', '⭐', '💫', '🌈', '🦋', '🕊️', '🌸', '🌺', '🌻', 
+        '❤️', '💚', '💜', '💙', '🤍', '✅', '➕', '👍', '🙌', 
+        '✝️', '☪️', '🔯', '☮️', '🕎', '🛡️', '👑', '💰', '🎭', '🎨'
+    ];
+
+    const negativeSymbols = [
+        '💀', '☠️', '👎', '❌', '➖', '🚫', '⛔', '🔴', '💔', 
+        '🤮', '😵', '😰', '😱', '💣', '⚡', '🌪️', '☁️', '🌧️',
+        '🔥', '💥', '⚠️', '🆘', '📉', '💸', '🗡️', '⚔️', '🔪',
+        '🕷️', '🐍', '🦂', '👹', '👺', '🤡', '💩', '🧟', '🦇'
+    ];
+
+    // Vibrational analysis function
+    function analyzeVibrationalEnergy(text) {
+        const lowerText = text.toLowerCase();
+        
+        // Positive keywords
+        const positiveWords = [
+            'love', 'peace', 'joy', 'light', 'gratitude', 'blessed', 'amazing', 'beautiful', 
+            'wonderful', 'fantastic', 'awesome', 'grateful', 'happy', 'enlightened', 
+            'spiritual', 'divine', 'sacred', 'healing', 'wisdom', 'transcend', 'manifest',
+            'abundance', 'prosperity', 'harmony', 'unity', 'compassion', 'kindness',
+            'hope', 'faith', 'trust', 'believe', 'inspire', 'magic', 'miracle',
+            'soul', 'spirit', 'energy', 'vibration', 'frequency', 'consciousness',
+            'meditation', 'zen', 'namaste', 'blessed', 'thank', 'appreciate'
+        ];
+        
+        // Negative keywords  
+        const negativeWords = [
+            'hate', 'anger', 'fear', 'dark', 'evil', 'terrible', 'awful', 'horrible',
+            'sad', 'depressed', 'anxious', 'worried', 'stressed', 'frustrated',
+            'angry', 'mad', 'furious', 'disgusted', 'sick', 'tired', 'exhausted',
+            'broken', 'hurt', 'pain', 'suffering', 'misery', 'despair', 'hopeless',
+            'worthless', 'useless', 'failure', 'disaster', 'nightmare', 'curse',
+            'damn', 'hell', 'devil', 'toxic', 'poison', 'disease', 'death',
+            'destroy', 'kill', 'murder', 'violence', 'war', 'fight', 'attack'
+        ];
+        
+        let positiveScore = 0;
+        let negativeScore = 0;
+        
+        positiveWords.forEach(word => {
+            if (lowerText.includes(word)) positiveScore++;
+        });
+        
+        negativeWords.forEach(word => {
+            if (lowerText.includes(word)) negativeScore++;
+        });
+        
+        // Return vibrational level (-3 to +3)
+        return Math.max(-3, Math.min(3, positiveScore - negativeScore));
+    }
+
+    // Spawn magical symbols
+    function spawnVibrationalSymbols(vibrationalLevel, messageLength) {
+        if (!vibrationalSymbols) return;
+        
+        const isPositive = vibrationalLevel > 0;
+        const intensity = Math.abs(vibrationalLevel);
+        const symbolCount = Math.min(8, Math.max(1, intensity + Math.floor(messageLength / 20)));
+        
+        for (let i = 0; i < symbolCount; i++) {
+            setTimeout(() => {
+                const symbol = document.createElement('div');
+                symbol.className = `vibrational-symbol ${isPositive ? 'positive' : 'negative'}`;
+                
+                // Choose random symbol from appropriate array
+                const symbolArray = isPositive ? positiveSymbols : negativeSymbols;
+                symbol.textContent = symbolArray[Math.floor(Math.random() * symbolArray.length)];
+                
+                // Random position
+                symbol.style.left = Math.random() * (window.innerWidth - 50) + 'px';
+                symbol.style.top = Math.random() * (window.innerHeight - 50) + 'px';
+                
+                // Vary size based on intensity
+                const size = 20 + (intensity * 8) + Math.random() * 16;
+                symbol.style.fontSize = size + 'px';
+                
+                vibrationalSymbols.appendChild(symbol);
+                
+                // Remove symbol after animation
+                setTimeout(() => {
+                    if (symbol.parentNode) {
+                        symbol.parentNode.removeChild(symbol);
+                    }
+                }, 4000);
+            }, i * 200); // Stagger symbol appearance
+        }
+    }
 
     function initializeMicrophone() {
         console.log("Initializing microphone functionality...");
@@ -241,6 +336,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const messageText = chatInput.value.trim();
         if (messageText) {
+            // Analyze vibrational energy and spawn symbols
+            const vibrationalLevel = analyzeVibrationalEnergy(messageText);
+            spawnVibrationalSymbols(vibrationalLevel, messageText.length);
+            
             appendMessage(messageText, 'user-message');
             chatInput.value = '';
             toggleWizardSpeaking(true);
