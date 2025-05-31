@@ -130,16 +130,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(-3, Math.min(3, positiveScore - negativeScore));
     }
 
-    // Vibrational color mapping - subtly perceptible
+    // Vibrational color mapping - more intense and visible
     const vibrationalColors = {
-        // Highly positive (love, spiritual, transcendent) - subtle but visible
-        3: '#2a1535',  // Subtle purple for highest vibration
-        2: '#1f1a35',  // Subtle blue-purple  
-        1: '#1a2035',  // Subtle blue tint
+        // Highly positive (love, spiritual, transcendent) - more intense
+        3: '#4a2555',  // Stronger purple for highest vibration
+        2: '#3f2a55',  // Stronger blue-purple  
+        1: '#2a3055',  // Stronger blue tint
         0: '#000000',  // Black for neutral
-        '-1': '#352015', // Subtle orange tint
-        '-2': '#351515', // Subtle red tint
-        '-3': '#350a0a'  // More noticeable red tint
+        '-1': '#553025', // Stronger orange tint
+        '-2': '#552525', // Stronger red tint
+        '-3': '#551515'  // Strong red tint
     };
 
     // Astrological positions for zodiac symbols (12 positions around a circle)
@@ -162,32 +162,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function getVibrationalColor(vibrationalLevel, messageText) {
         const lowerText = messageText.toLowerCase();
         
-        // Check for specific high-vibe themes - subtly perceptible
+        // Check for specific high-vibe themes - more intense colors
         if (lowerText.includes('love') || lowerText.includes('divine') || lowerText.includes('blessed')) {
-            return '#35152a'; // Subtle pink tint
+            return '#55254a'; // Stronger pink tint
         }
         if (lowerText.includes('spiritual') || lowerText.includes('sacred') || lowerText.includes('enlighten')) {
-            return '#251535'; // Subtle purple tint
+            return '#452555'; // Stronger purple tint
         }
         if (lowerText.includes('peace') || lowerText.includes('harmony') || lowerText.includes('zen')) {
-            return '#152535'; // Subtle cyan tint
+            return '#254555'; // Stronger cyan tint
         }
         if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate')) {
-            return '#353515'; // Subtle yellow tint
+            return '#555525'; // Stronger yellow tint
         }
         if (lowerText.includes('gratitude') || lowerText.includes('thank') || lowerText.includes('appreciate')) {
-            return '#153515'; // Subtle green tint
+            return '#255525'; // Stronger green tint
         }
         
-        // Check for specific low-vibe themes - subtly perceptible
+        // Check for specific low-vibe themes - more intense colors
         if (lowerText.includes('hate') || lowerText.includes('evil') || lowerText.includes('curse')) {
-            return '#350a0a'; // Subtle dark red
+            return '#551515'; // Stronger dark red
         }
         if (lowerText.includes('fear') || lowerText.includes('terror') || lowerText.includes('nightmare')) {
-            return '#151515'; // Subtle dark gray
+            return '#252525'; // Stronger dark gray
         }
         if (lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('furious')) {
-            return '#351010'; // Subtle red tint
+            return '#552020'; // Stronger red tint
         }
         
         // Default to vibrational level color
@@ -313,8 +313,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const isPositive = vibrationalLevel > 0;
         const intensity = Math.abs(vibrationalLevel);
-        // Increase symbol count significantly
-        const symbolCount = Math.min(20, Math.max(3, (intensity * 4) + Math.floor(messageLength / 15)));
+        // Ensure at least 10 symbols, up to 25 for strong vibrations
+        const symbolCount = Math.min(25, Math.max(10, (intensity * 6) + Math.floor(messageLength / 10)));
         
         // Get thematically appropriate symbols for this message
         const thematicSymbols = getThematicSymbols(messageText, isPositive);

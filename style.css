@@ -21,13 +21,13 @@ body.vibrational-pulse {
 
 @keyframes vibrational-background-pulse {
     0% {
-        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 70%);
+        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 60%);
     }
     50% {
-        background: radial-gradient(circle, var(--vibe-color, #000000) 30%, #000000 90%);
+        background: radial-gradient(circle, var(--vibe-color, #000000) 40%, #000000 80%);
     }
     100% {
-        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 70%);
+        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 60%);
     }
 }
 
