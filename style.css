@@ -395,6 +395,7 @@ body.vibrational-pulse {
     margin: 0;
     overflow-x: auto;
     color: var(--aurora-color1);
+    text-align:left;
     text-shadow: 0 0 5px var(--aurora-color1);
 }
 
