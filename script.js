@@ -12,20 +12,43 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRecording = false;
     let recordingTimeout;
 
-    // Vibrational symbol arrays
+    // Expanded vibrational symbol arrays with HTML entities and more mystical symbols
     const positiveSymbols = [
-        '☀️', '🌟', '✨', '💎', '🔮', '🕉️', '☯️', '🙏', 
+        // Celestial & Light
+        '☀️', '🌟', '✨', '💫', '⭐', '🌙', '🌞', '🌛', '🌜', '🌝', '🌚',
+        // Mystical & Spiritual
+        '💎', '🔮', '🕉️', '☯️', '🙏', '✝️', '☪️', '🔯', '☮️', '🕎', '⚛️',
+        // Zodiac Signs
         '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓',
-        '🌙', '⭐', '💫', '🌈', '🦋', '🕊️', '🌸', '🌺', '🌻', 
-        '❤️', '💚', '💜', '💙', '🤍', '✅', '➕', '👍', '🙌', 
-        '✝️', '☪️', '🔯', '☮️', '🕎', '🛡️', '👑', '💰', '🎭', '🎨'
+        // Nature & Life
+        '🌈', '🦋', '🕊️', '🌸', '🌺', '🌻', '🌷', '🌹', '🍀', '🌿', '🌱',
+        '🌳', '🌲', '🌴', '🍃', '🦢', '🐝', '🦄', '🧚', '🧜', '🦅',
+        // Sacred Geometry & Symbols
+        '❤️', '💚', '💜', '💙', '🤍', '💛', '🧡', '✅', '➕', '👍', '🙌',
+        '🛡️', '👑', '💰', '🎭', '🎨', '🎪', '🎯', '🏆', '🎖️', '🥇',
+        // HTML Entities & Unicode
+        '∞', '☆', '★', '✦', '✧', '✩', '✪', '✫', '✬', '✭', '✮', '✯',
+        '◊', '◈', '◉', '○', '●', '◌', '◍', '◎', '◐', '◑', '◒', '◓',
+        '♠', '♣', '♥', '♦', '♡', '♢', '♧', '♤', '⚡', '⚜', '❅', '❆'
     ];
 
     const negativeSymbols = [
-        '💀', '☠️', '👎', '❌', '➖', '🚫', '⛔', '🔴', '💔', 
-        '🤮', '😵', '😰', '😱', '💣', '⚡', '🌪️', '☁️', '🌧️',
-        '🔥', '💥', '⚠️', '🆘', '📉', '💸', '🗡️', '⚔️', '🔪',
-        '🕷️', '🐍', '🦂', '👹', '👺', '🤡', '💩', '🧟', '🦇'
+        // Death & Darkness
+        '💀', '☠️', '👹', '👺', '👿', '😈', '🧟', '🦇', '🕷️', '🐍', '🦂',
+        // Negative Emotions
+        '💔', '😵', '😰', '😱', '🤮', '😭', '😢', '😤', '😡', '🤬',
+        // Destruction & Warning
+        '💣', '💥', '⚡', '🌪️', '🌊', '🔥', '⚠️', '🆘', '☢️', '☣️',
+        // Rejection & Negation
+        '❌', '➖', '🚫', '⛔', '🔴', '👎', '📉', '💸', '🗡️', '⚔️', '🔪',
+        // Weather & Chaos
+        '☁️', '🌧️', '⛈️', '🌩️', '❄️', '🧊', '🌫️',
+        // Creatures & Monsters
+        '🦟', '🪰', '🐀', '🦘', '🐺', '🦈', '🐙', '👾', '🤡', '💩',
+        // HTML Entities & Dark Symbols
+        '✖', '✗', '✘', '⛌', '⛍', '⛎', '⛏', '⚒', '⚓', '⚰', '⚱',
+        '◐', '◑', '◒', '◓', '◔', '◕', '◖', '◗', '◘', '◙', '◚', '◛',
+        '▲', '▼', '◆', '◇', '■', '□', '▪', '▫', '▬', '▭', '▮', '▯'
     ];
 
     // Vibrational analysis function
@@ -69,13 +92,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(-3, Math.min(3, positiveScore - negativeScore));
     }
 
-    // Spawn magical symbols
+    // Clear existing symbols
+    function clearVibrationalSymbols() {
+        if (!vibrationalSymbols) return;
+        vibrationalSymbols.innerHTML = '';
+    }
+
+    // Spawn magical symbols (now persist until next query)
     function spawnVibrationalSymbols(vibrationalLevel, messageLength) {
         if (!vibrationalSymbols) return;
         
+        // Clear previous symbols first
+        clearVibrationalSymbols();
+        
         const isPositive = vibrationalLevel > 0;
         const intensity = Math.abs(vibrationalLevel);
-        const symbolCount = Math.min(8, Math.max(1, intensity + Math.floor(messageLength / 20)));
+        // Increase symbol count significantly
+        const symbolCount = Math.min(20, Math.max(3, (intensity * 4) + Math.floor(messageLength / 15)));
         
         for (let i = 0; i < symbolCount; i++) {
             setTimeout(() => {
@@ -86,23 +119,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const symbolArray = isPositive ? positiveSymbols : negativeSymbols;
                 symbol.textContent = symbolArray[Math.floor(Math.random() * symbolArray.length)];
                 
-                // Random position
-                symbol.style.left = Math.random() * (window.innerWidth - 50) + 'px';
-                symbol.style.top = Math.random() * (window.innerHeight - 50) + 'px';
+                // Random position with better distribution
+                symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
+                symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
                 
-                // Vary size based on intensity
-                const size = 20 + (intensity * 8) + Math.random() * 16;
+                // Vary size based on intensity and randomness
+                const size = 18 + (intensity * 6) + Math.random() * 20;
                 symbol.style.fontSize = size + 'px';
+                
+                // Add random delay to pulsing animation
+                symbol.style.animationDelay = Math.random() * 2 + 's';
                 
                 vibrationalSymbols.appendChild(symbol);
                 
-                // Remove symbol after animation
-                setTimeout(() => {
-                    if (symbol.parentNode) {
-                        symbol.parentNode.removeChild(symbol);
-                    }
-                }, 4000);
-            }, i * 200); // Stagger symbol appearance
+                // Symbols now persist until next query (no automatic removal)
+            }, i * 150); // Faster stagger
         }
     }
 
