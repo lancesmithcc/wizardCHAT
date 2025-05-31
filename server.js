@@ -2,23 +2,15 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const path = require('path');
 const { fal } = require('@fal-ai/client');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-const corsOptions = {
-    origin: ['https://www.wizardchat.lancesmith.cc', 'http://localhost:3000'],
-    credentials: true
-};
-app.use(cors(corsOptions));
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json({ limit: '15mb' })); // Parse JSON bodies with size limit
 app.use(express.urlencoded({ limit: '15mb', extended: true }));
-
-// Serve static files (HTML, CSS, JS)
-app.use(express.static('.'));
 
 // API Keys from .env
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -36,9 +28,9 @@ if (!FAL_API_KEY) {
     });
 }
 
-// Serve the main application
+// Basic route to check if server is running
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.send('Wizard CHAT backend is enchanting the bits and bytes...');
 });
 
 // Endpoint for DeepSeek chat
@@ -264,5 +256,5 @@ app.post('/api/fal-kokoro-tts', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Wizard's mystical server is running on port ${PORT}`);
+    console.log(`Wizard's mystical server is running on http://localhost:${PORT}`);
 }); 
