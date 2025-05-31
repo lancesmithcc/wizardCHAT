@@ -457,37 +457,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 audioContext.resume();
             }
             
-            // Create media element source
-            const source = audioContext.createMediaElementSource(audioElement);
-            
-            // Connect the effect chain
-            source
-                .connect(wizardAudioEffects.inputGain)
-                .connect(wizardAudioEffects.highpassFilter)
-                .connect(wizardAudioEffects.lowpassFilter)
-                .connect(wizardAudioEffects.distortion)
-                .connect(wizardAudioEffects.delayNode)
-                .connect(wizardAudioEffects.bitcrushGain);
-            
-            // Ring modulation branch
-            const ringModulator = audioContext.createGain();
-            wizardAudioEffects.ringModOsc.connect(wizardAudioEffects.ringModGain);
-            wizardAudioEffects.ringModGain.connect(ringModulator.gain);
-            
-            wizardAudioEffects.bitcrushGain.connect(ringModulator);
-            
-            // Feedback delay
-            wizardAudioEffects.delayNode.connect(wizardAudioEffects.feedbackGain);
-            wizardAudioEffects.feedbackGain.connect(wizardAudioEffects.delayNode);
-            
-            // Final output
-            ringModulator
-                .connect(wizardAudioEffects.outputGain)
-                .connect(audioContext.destination);
-            
-            console.log("Wizard audio effects applied");
+            // Create media element source (only once per audio element)
+            if (!audioElement._webAudioSource) {
+                const source = audioContext.createMediaElementSource(audioElement);
+                audioElement._webAudioSource = source;
+                
+                // Create a simplified effects chain
+                const gainNode = audioContext.createGain();
+                const filterNode = audioContext.createBiquadFilter();
+                const distortionNode = audioContext.createWaveShaper();
+                
+                // Setup filter for robotic character
+                filterNode.type = 'lowpass';
+                filterNode.frequency.setValueAtTime(2500, audioContext.currentTime);
+                filterNode.Q.setValueAtTime(2, audioContext.currentTime);
+                
+                // Setup subtle distortion
+                const makeDistortionCurve = (amount) => {
+                    const samples = 44100;
+                    const curve = new Float32Array(samples);
+                    for (let i = 0; i < samples; i++) {
+                        const x = (i * 2) / samples - 1;
+                        curve[i] = Math.tanh(x * amount);
+                    }
+                    return curve;
+                };
+                distortionNode.curve = makeDistortionCurve(3);
+                distortionNode.oversample = '2x';
+                
+                // Setup gain
+                gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                
+                // Connect the simplified chain
+                source
+                    .connect(gainNode)
+                    .connect(filterNode)
+                    .connect(distortionNode)
+                    .connect(audioContext.destination);
+                
+                console.log("Simplified wizard audio effects applied");
+            }
         } catch (error) {
             console.error("Error applying wizard effects:", error);
+            // If Web Audio fails, return the original audio element
+            return audioElement;
         }
         
         return audioElement;
@@ -561,16 +574,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     const audio = new Audio(data.audioUrl);
                     audio.volume = 1.0; // 100% volume for Kokoro voice
                     
-                    // Apply wizard effects to the audio
-                    const processedAudio = applyWizardEffects(audio);
-                    
                     audio.onloadstart = () => console.log('Audio loading started');
-                    audio.oncanplay = () => console.log('Audio can start playing');
-                    audio.onplay = () => console.log('Audio playback started (with wizard effects)');
+                    audio.oncanplay = () => {
+                        console.log('Audio can start playing');
+                        // Apply wizard effects after audio is ready to play
+                        try {
+                            applyWizardEffects(audio);
+                        } catch (effectError) {
+                            console.warn('Effects failed, playing without effects:', effectError);
+                        }
+                    };
+                    audio.onplay = () => console.log('Audio playback started');
                     audio.onended = () => console.log('Audio playback ended');
                     audio.onerror = (e) => console.error('Audio error:', e);
                     
-                    processedAudio.play().catch(err => {
+                    audio.play().catch(err => {
                         console.error("Error playing TTS audio:", err);
                         appendMessage("The wizard's voice echoes only in silence (audio playback failed).", "wizard-message error");
                     });
