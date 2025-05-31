@@ -352,43 +352,43 @@ body.vibrational-pulse {
     width: 90%;
 }
 
-.title-area {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-#wizard-title-ascii {
-    font-family: monospace;
-    font-size: clamp(0.5rem, 2.5vw, 1.2rem); /* Responsive scaling */
-    line-height: 1;
-    animation: aurora-text-wizard 33s ease infinite alternate;
-    white-space: pre;
-    margin: 0;
-    overflow-x: auto;
-    color: var(--aurora-color1);
-    text-shadow: 0 0 5px var(--aurora-color1);
-}
-
-.wizard-area {
+.header-row {
     display: flex;
-    flex-direction: column; /* Stack wizard above speech bubble */
+    width: 100%;
     align-items: center;
     justify-content: center;
-    gap: 20px;
     margin-bottom: 20px;
+    gap: 5%;
+}
+
+.speech-area {
     width: 100%;
-    max-width: 600px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 #wizard-ascii {
     font-family: monospace;
-    font-size: clamp(8px, 1.5vw, 16px); /* Responsive scaling for wizard */
+    font-size: clamp(8px, 1.5vw, 16px);
     line-height: 1;
     white-space: pre;
     animation: aurora-text-wizard 33s ease infinite alternate;
     margin: 0;
-    text-align: center;
+    width: 30%;
+    flex-shrink: 0;
+}
+
+#wizard-title-ascii {
+    font-family: monospace;
+    font-size: clamp(0.3rem, 1.2vw, 0.7rem); /* Smaller for CHAT text */
+    line-height: 1;
+    animation: aurora-text-wizard 33s ease infinite alternate;
+    white-space: pre;
+    margin: 0;
+    width: 65%;
+    overflow-x: auto;
+    color: var(--aurora-color1);
+    text-shadow: 0 0 5px var(--aurora-color1);
 }
 
 @keyframes aurora-text-wizard {
