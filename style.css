@@ -21,13 +21,13 @@ body.vibrational-pulse {
 
 @keyframes vibrational-background-pulse {
     0% {
-        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 60%);
+        background-color: #000000;
     }
     50% {
-        background: radial-gradient(circle, var(--vibe-color, #000000) 40%, #000000 80%);
+        background-color: var(--vibe-color, #000000);
     }
     100% {
-        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 60%);
+        background-color: #000000;
     }
 }
 
@@ -40,16 +40,25 @@ body.vibrational-pulse {
     height: 70vmin;
     pointer-events: none;
     z-index: -1;
-    opacity: 0.3;
-    animation: astrological-rotation 120s linear infinite;
+    opacity: 0.4;
+    animation: chaotic-swirl 80s ease-in-out infinite;
 }
 
-@keyframes astrological-rotation {
+@keyframes chaotic-swirl {
     0% {
-        transform: translate(-50%, -50%) rotate(0deg);
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+    25% {
+        transform: translate(-50%, -50%) rotate(90deg) scale(1.1);
+    }
+    50% {
+        transform: translate(-50%, -50%) rotate(180deg) scale(0.9);
+    }
+    75% {
+        transform: translate(-50%, -50%) rotate(270deg) scale(1.05);
     }
     100% {
-        transform: translate(-50%, -50%) rotate(360deg);
+        transform: translate(-50%, -50%) rotate(360deg) scale(1);
     }
 }
 
@@ -58,17 +67,29 @@ body.vibrational-pulse {
     font-size: 24px;
     color: var(--aurora-color1, #4a00e0);
     text-shadow: 0 0 8px var(--aurora-color1, #4a00e0);
-    animation: aurora-text-zodiac 15s ease infinite alternate, counter-rotate 120s linear infinite;
+    animation: aurora-text-zodiac 15s ease infinite alternate, chaotic-counter-rotate 70s ease-in-out infinite;
     user-select: none;
     transform: translate(-50%, -50%);
 }
 
-@keyframes counter-rotate {
+@keyframes chaotic-counter-rotate {
     0% {
-        transform: translate(-50%, -50%) rotate(0deg);
+        transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+    20% {
+        transform: translate(-50%, -50%) rotate(-120deg) scale(1.2);
+    }
+    40% {
+        transform: translate(-50%, -50%) rotate(-180deg) scale(0.8);
+    }
+    60% {
+        transform: translate(-50%, -50%) rotate(-240deg) scale(1.1);
+    }
+    80% {
+        transform: translate(-50%, -50%) rotate(-300deg) scale(0.9);
     }
     100% {
-        transform: translate(-50%, -50%) rotate(-360deg);
+        transform: translate(-50%, -50%) rotate(-360deg) scale(1);
     }
 }
 

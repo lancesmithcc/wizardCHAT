@@ -220,15 +220,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function createAstrologicalWheel() {
         if (!astrologicalWheel) return;
         
-        // HTML entity zodiac symbols with correct codes
-        const zodiacSigns = ['&#9801;', '&#9802;', '&#9803;', '&#9804;', '&#9805;', '&#9806;', '&#9807;', '&#9808;', '&#9809;', '&#9810;', '&#9811;', '&#9812;'];
+        // Simple planetary astrology symbols
+        const astroSigns = ['☿', '♀', '♁', '♂', '♃', '♄', '♅', '♆', '♇'];
         
-        zodiacSigns.forEach((sign, index) => {
+        astroSigns.forEach((sign, index) => {
             const symbol = document.createElement('div');
             symbol.className = 'zodiac-symbol';
-            symbol.innerHTML = sign; // Use innerHTML for HTML entities
+            symbol.textContent = sign; // Use textContent for simple characters
             
-            const angle = index * 30; // 30 degrees apart
+            const angle = index * 40; // 40 degrees apart (9 symbols = 360/9 = 40°)
             const radius = 45; // 45% of container
             const angleRad = (angle * Math.PI) / 180;
             
