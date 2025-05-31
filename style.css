@@ -445,7 +445,7 @@ body.vibrational-pulse {
     padding: 10px 15px;
     border-radius: 5px;
     border: none;
-    /* background-color: #8e2de2; */
+    background-color: transparent;
     /* color: #fff; */
     cursor: pointer;
     font-family: 'Doto', sans-serif;
