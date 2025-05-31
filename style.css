@@ -445,6 +445,7 @@ body.vibrational-pulse {
     color: #fff !important; /* User typing text will be white */
     font-family: 'Doto', sans-serif;
     resize: none;
+    width:70%;
     height: 40px;filter:rotate(2deg);
 }
 
