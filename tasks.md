@@ -1,4 +1,20 @@
-# Project Tasks
+# wizardCHAT Project Tasks
+
+## Setup Tasks
+- [x] Initialize git repository
+- [x] Configure GitHub remote repository
+
+## Development Tasks
+- [ ] Review existing codebase structure
+- [ ] Identify areas for improvement
+- [ ] Ensure code stays modular, clean, and efficient
+- [ ] Refactor any files larger than 500 lines
+
+## Deployment Tasks
+- [x] Push code to GitHub repository
+
+## Future Enhancements
+- [ ] TBD based on project requirements
 
 ## Phase 1: Initial Setup & UI
 
