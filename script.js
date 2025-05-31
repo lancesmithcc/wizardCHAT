@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let backgroundMusic = null;
     let musicStarted = false;
     let conversationHistory = [];
+    let audioContext = null;
+    let wizardAudioEffects = null;
 
     // Massively expanded vibrational symbol arrays with HTML entities and mystical symbols
     const positiveSymbols = [
@@ -369,6 +371,128 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Initialize Web Audio Context and Effects
+    function initializeAudioEffects() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            wizardAudioEffects = {
+                // Create oscillator for ring modulation
+                ringModOsc: audioContext.createOscillator(),
+                ringModGain: audioContext.createGain(),
+                
+                // Create filters
+                lowpassFilter: audioContext.createBiquadFilter(),
+                highpassFilter: audioContext.createBiquadFilter(),
+                
+                // Create distortion using WaveShaper
+                distortion: audioContext.createWaveShaper(),
+                
+                // Create gain nodes for mixing
+                inputGain: audioContext.createGain(),
+                outputGain: audioContext.createGain(),
+                
+                // Pitch shift simulation (basic)
+                delayNode: audioContext.createDelay(),
+                feedbackGain: audioContext.createGain(),
+                
+                // Bitcrusher simulation
+                bitcrushGain: audioContext.createGain(),
+                
+                // Main source and destination
+                source: null,
+                destination: audioContext.destination
+            };
+            
+            // Setup ring modulation
+            wizardAudioEffects.ringModOsc.frequency.setValueAtTime(30, audioContext.currentTime); // Low frequency for robotic buzz
+            wizardAudioEffects.ringModOsc.start();
+            wizardAudioEffects.ringModGain.gain.setValueAtTime(0.3, audioContext.currentTime); // Subtle ring mod
+            
+            // Setup filters
+            wizardAudioEffects.lowpassFilter.type = 'lowpass';
+            wizardAudioEffects.lowpassFilter.frequency.setValueAtTime(3000, audioContext.currentTime); // Cut high frequencies
+            wizardAudioEffects.lowpassFilter.Q.setValueAtTime(1, audioContext.currentTime);
+            
+            wizardAudioEffects.highpassFilter.type = 'highpass';
+            wizardAudioEffects.highpassFilter.frequency.setValueAtTime(200, audioContext.currentTime); // Cut very low frequencies
+            wizardAudioEffects.highpassFilter.Q.setValueAtTime(0.5, audioContext.currentTime);
+            
+            // Setup subtle distortion
+            const makeDistortionCurve = (amount) => {
+                const samples = 44100;
+                const curve = new Float32Array(samples);
+                const deg = Math.PI / 180;
+                for (let i = 0; i < samples; i++) {
+                    const x = (i * 2) / samples - 1;
+                    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+                }
+                return curve;
+            };
+            wizardAudioEffects.distortion.curve = makeDistortionCurve(2); // Subtle distortion
+            wizardAudioEffects.distortion.oversample = '4x';
+            
+            // Setup delay for pitch simulation
+            wizardAudioEffects.delayNode.delayTime.setValueAtTime(0.02, audioContext.currentTime); // 20ms delay
+            wizardAudioEffects.feedbackGain.gain.setValueAtTime(0.1, audioContext.currentTime);
+            
+            // Setup gains
+            wizardAudioEffects.inputGain.gain.setValueAtTime(0.8, audioContext.currentTime);
+            wizardAudioEffects.outputGain.gain.setValueAtTime(0.9, audioContext.currentTime);
+            wizardAudioEffects.bitcrushGain.gain.setValueAtTime(0.7, audioContext.currentTime);
+            
+            console.log("Audio effects initialized");
+        } catch (error) {
+            console.error("Error initializing audio effects:", error);
+        }
+    }
+
+    // Apply effects to audio element
+    function applyWizardEffects(audioElement) {
+        if (!audioContext || !wizardAudioEffects || !audioElement) return audioElement;
+        
+        try {
+            // Resume audio context if suspended
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Create media element source
+            const source = audioContext.createMediaElementSource(audioElement);
+            
+            // Connect the effect chain
+            source
+                .connect(wizardAudioEffects.inputGain)
+                .connect(wizardAudioEffects.highpassFilter)
+                .connect(wizardAudioEffects.lowpassFilter)
+                .connect(wizardAudioEffects.distortion)
+                .connect(wizardAudioEffects.delayNode)
+                .connect(wizardAudioEffects.bitcrushGain);
+            
+            // Ring modulation branch
+            const ringModulator = audioContext.createGain();
+            wizardAudioEffects.ringModOsc.connect(wizardAudioEffects.ringModGain);
+            wizardAudioEffects.ringModGain.connect(ringModulator.gain);
+            
+            wizardAudioEffects.bitcrushGain.connect(ringModulator);
+            
+            // Feedback delay
+            wizardAudioEffects.delayNode.connect(wizardAudioEffects.feedbackGain);
+            wizardAudioEffects.feedbackGain.connect(wizardAudioEffects.delayNode);
+            
+            // Final output
+            ringModulator
+                .connect(wizardAudioEffects.outputGain)
+                .connect(audioContext.destination);
+            
+            console.log("Wizard audio effects applied");
+        } catch (error) {
+            console.error("Error applying wizard effects:", error);
+        }
+        
+        return audioElement;
+    }
+
     // Initialize background music
     function initializeBackgroundMusic() {
         backgroundMusic = new Audio('./wizardry.mp3');
@@ -437,13 +561,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const audio = new Audio(data.audioUrl);
                     audio.volume = 1.0; // 100% volume for Kokoro voice
                     
+                    // Apply wizard effects to the audio
+                    const processedAudio = applyWizardEffects(audio);
+                    
                     audio.onloadstart = () => console.log('Audio loading started');
                     audio.oncanplay = () => console.log('Audio can start playing');
-                    audio.onplay = () => console.log('Audio playback started');
+                    audio.onplay = () => console.log('Audio playback started (with wizard effects)');
                     audio.onended = () => console.log('Audio playback ended');
                     audio.onerror = (e) => console.error('Audio error:', e);
                     
-                    audio.play().catch(err => {
+                    processedAudio.play().catch(err => {
                         console.error("Error playing TTS audio:", err);
                         appendMessage("The wizard's voice echoes only in silence (audio playback failed).", "wizard-message error");
                     });
@@ -724,4 +851,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMicrophone();
     createAstrologicalWheel();
     initializeBackgroundMusic();
+    initializeAudioEffects();
 });
