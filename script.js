@@ -127,48 +127,48 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(-3, Math.min(3, positiveScore - negativeScore));
     }
 
-    // Vibrational color mapping
+    // Vibrational color mapping - very subtle, low contrast
     const vibrationalColors = {
-        // Highly positive (love, spiritual, transcendent)
-        3: '#ff69b4',  // Hot pink for love/highest vibration
-        2: '#9966ff',  // Purple for spiritual/mystical
-        1: '#4169e1',  // Royal blue for positive/peaceful
+        // Highly positive (love, spiritual, transcendent) - subtle purples/blues
+        3: '#1a0a1a',  // Very dark purple tint
+        2: '#0f0a1a',  // Very dark blue-purple  
+        1: '#0a0f1a',  // Very dark blue tint
         0: '#000000',  // Black for neutral
-        '-1': '#ff4500', // Orange-red for mild negativity
-        '-2': '#dc143c', // Crimson for strong negativity  
-        '-3': '#8b0000'  // Dark red for lowest vibration
+        '-1': '#1a0f0a', // Very dark orange tint
+        '-2': '#1a0a0a', // Very dark red tint
+        '-3': '#1a0505'  // Slightly darker red tint
     };
 
-    // Advanced vibrational analysis with color themes
+    // Advanced vibrational analysis with subtle color themes
     function getVibrationalColor(vibrationalLevel, messageText) {
         const lowerText = messageText.toLowerCase();
         
-        // Check for specific high-vibe themes
+        // Check for specific high-vibe themes - all very subtle
         if (lowerText.includes('love') || lowerText.includes('divine') || lowerText.includes('blessed')) {
-            return '#ff1493'; // Deep pink for love
+            return '#1a0a15'; // Very subtle pink tint
         }
         if (lowerText.includes('spiritual') || lowerText.includes('sacred') || lowerText.includes('enlighten')) {
-            return '#9370db'; // Medium purple for spiritual
+            return '#150a1a'; // Very subtle purple tint
         }
         if (lowerText.includes('peace') || lowerText.includes('harmony') || lowerText.includes('zen')) {
-            return '#00ced1'; // Dark turquoise for peace
+            return '#0a1515'; // Very subtle cyan tint
         }
         if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate')) {
-            return '#ffd700'; // Gold for joy
+            return '#1a1a0a'; // Very subtle yellow tint
         }
         if (lowerText.includes('gratitude') || lowerText.includes('thank') || lowerText.includes('appreciate')) {
-            return '#32cd32'; // Lime green for gratitude
+            return '#0a1a0a'; // Very subtle green tint
         }
         
-        // Check for specific low-vibe themes
+        // Check for specific low-vibe themes - all very subtle
         if (lowerText.includes('hate') || lowerText.includes('evil') || lowerText.includes('curse')) {
-            return '#8b0000'; // Dark red for hate
+            return '#1a0505'; // Very subtle dark red
         }
         if (lowerText.includes('fear') || lowerText.includes('terror') || lowerText.includes('nightmare')) {
-            return '#2f2f2f'; // Dark gray for fear
+            return '#0a0a0a'; // Barely noticeable dark gray
         }
         if (lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('furious')) {
-            return '#b22222'; // Fire brick for anger
+            return '#1a0808'; // Very subtle red tint
         }
         
         // Default to vibrational level color

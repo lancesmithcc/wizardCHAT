@@ -14,20 +14,20 @@ body {
     transition: background-color 2s ease;
 }
 
-/* Dynamic vibrational background pulsing */
+/* Dynamic vibrational background pulsing - very subtle */
 body.vibrational-pulse {
-    animation: vibrational-background-pulse 4s ease-in-out infinite, aurora-bg 20s ease infinite alternate;
+    animation: vibrational-background-pulse 8s ease-in-out infinite, aurora-bg 20s ease infinite alternate;
 }
 
 @keyframes vibrational-background-pulse {
     0% {
-        background-color: #000;
+        background-color: #000000;
     }
     50% {
-        background-color: var(--vibe-color, #000);
+        background-color: var(--vibe-color, #000000);
     }
     100% {
-        background-color: #000;
+        background-color: #000000;
     }
 }
 
@@ -270,7 +270,7 @@ body.vibrational-pulse {
     background:none; /* Slightly lighter than pitch black for depth */
     padding: 20px;
     border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    
     max-width: 800px;
     width: 90%;
 }
@@ -398,11 +398,13 @@ body.vibrational-pulse {
 .chat-log p {
     margin: 5px 0;
     line-height: 1.4;
+    color:#333;
 }
 
 .user-message {
     /* color: #7f7; */
     text-align: right;
+    color:#555;
     animation: aurora-text-user 10s ease infinite alternate;
     margin-left: auto; /* Push user messages to the right */
     max-width: 70%; /* Prevent user messages from being too wide */
@@ -488,6 +490,7 @@ body.vibrational-pulse {
     line-height: 1.4;
     box-shadow: 0 0 10px var(--aurora-color3);transform:rotate(2deg);
     transition: all 0.3s ease;
+    color:#999;
 }
 
 /* Heartbeat animation for speech bubble when wizard is speaking */
