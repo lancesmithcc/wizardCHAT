@@ -14,9 +14,9 @@ body {
     transition: background-color 2s ease;
 }
 
-/* Dynamic vibrational background pulsing - very subtle */
+/* Dynamic vibrational background pulsing - subtly perceptible */
 body.vibrational-pulse {
-    animation: vibrational-background-pulse 8s ease-in-out infinite, aurora-bg 20s ease infinite alternate;
+    animation: vibrational-background-pulse 7s ease-in-out infinite, aurora-bg 20s ease infinite alternate;
 }
 
 @keyframes vibrational-background-pulse {
@@ -490,7 +490,7 @@ body.vibrational-pulse {
     line-height: 1.4;
     box-shadow: 0 0 10px var(--aurora-color3);transform:rotate(2deg);
     transition: all 0.3s ease;
-    color:#999;
+    color:#999 !important;
 }
 
 /* Heartbeat animation for speech bubble when wizard is speaking */

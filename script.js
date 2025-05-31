@@ -127,48 +127,64 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(-3, Math.min(3, positiveScore - negativeScore));
     }
 
-    // Vibrational color mapping - very subtle, low contrast
+    // Vibrational color mapping - subtly perceptible
     const vibrationalColors = {
-        // Highly positive (love, spiritual, transcendent) - subtle purples/blues
-        3: '#1a0a1a',  // Very dark purple tint
-        2: '#0f0a1a',  // Very dark blue-purple  
-        1: '#0a0f1a',  // Very dark blue tint
+        // Highly positive (love, spiritual, transcendent) - subtle but visible
+        3: '#2a1535',  // Subtle purple for highest vibration
+        2: '#1f1a35',  // Subtle blue-purple  
+        1: '#1a2035',  // Subtle blue tint
         0: '#000000',  // Black for neutral
-        '-1': '#1a0f0a', // Very dark orange tint
-        '-2': '#1a0a0a', // Very dark red tint
-        '-3': '#1a0505'  // Slightly darker red tint
+        '-1': '#352015', // Subtle orange tint
+        '-2': '#351515', // Subtle red tint
+        '-3': '#350a0a'  // More noticeable red tint
+    };
+
+    // Astrological positions for zodiac symbols (12 positions around a circle)
+    const zodiacPositions = {
+        '♈': { angle: 0 },    // Aries - East
+        '♉': { angle: 30 },   // Taurus
+        '♊': { angle: 60 },   // Gemini
+        '♋': { angle: 90 },   // Cancer - North
+        '♌': { angle: 120 },  // Leo
+        '♍': { angle: 150 },  // Virgo
+        '♎': { angle: 180 },  // Libra - West
+        '♏': { angle: 210 },  // Scorpio
+        '♐': { angle: 240 },  // Sagittarius
+        '♑': { angle: 270 },  // Capricorn - South
+        '♒': { angle: 300 },  // Aquarius
+        '♓': { angle: 330 }   // Pisces
     };
 
     // Advanced vibrational analysis with subtle color themes
     function getVibrationalColor(vibrationalLevel, messageText) {
         const lowerText = messageText.toLowerCase();
         
-        // Check for specific high-vibe themes - all very subtle
+        // Check for specific high-vibe themes - subtly perceptible
         if (lowerText.includes('love') || lowerText.includes('divine') || lowerText.includes('blessed')) {
-            return '#1a0a15'; // Very subtle pink tint
+            return '#35152a'; // Subtle pink tint
         }
         if (lowerText.includes('spiritual') || lowerText.includes('sacred') || lowerText.includes('enlighten')) {
-            return '#150a1a'; // Very subtle purple tint
+            return '#251535'; // Subtle purple tint
         }
         if (lowerText.includes('peace') || lowerText.includes('harmony') || lowerText.includes('zen')) {
-            return '#0a1515'; // Very subtle cyan tint
+            return '#152535'; // Subtle cyan tint
         }
         if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate')) {
-            return '#1a1a0a'; // Very subtle yellow tint
+            return '#353515'; // Subtle yellow tint
         }
         if (lowerText.includes('gratitude') || lowerText.includes('thank') || lowerText.includes('appreciate')) {
-            return '#0a1a0a'; // Very subtle green tint
+            return '#153515'; // Subtle green tint
         }
         
-        // Check for specific low-vibe themes - all very subtle
+        // Check for specific low-vibe themes - subtly perceptible
         if (lowerText.includes('hate') || lowerText.includes('evil') || lowerText.includes('curse')) {
-            return '#1a0505'; // Very subtle dark red
+            return '#350a0a'; // Subtle dark red
         }
         if (lowerText.includes('fear') || lowerText.includes('terror') || lowerText.includes('nightmare')) {
-            return '#0a0a0a'; // Barely noticeable dark gray
+            return '#151515'; // Subtle dark gray
         }
         if (lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('furious')) {
-            return '#1a0808'; // Very subtle red tint
+            return '#351010'; // Subtle red tint
         }
         
         // Default to vibrational level color
@@ -222,11 +238,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Choose random symbol from appropriate array
                 const symbolArray = isPositive ? positiveSymbols : negativeSymbols;
-                symbol.textContent = symbolArray[Math.floor(Math.random() * symbolArray.length)];
+                const chosenSymbol = symbolArray[Math.floor(Math.random() * symbolArray.length)];
+                symbol.textContent = chosenSymbol;
                 
-                // Random position with better distribution
-                symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
-                symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
+                // Position zodiac symbols in correct astrological positions
+                if (zodiacPositions[chosenSymbol]) {
+                    const position = zodiacPositions[chosenSymbol];
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
+                    const radius = Math.min(window.innerWidth, window.innerHeight) * 0.35;
+                    
+                    const angleRad = (position.angle * Math.PI) / 180;
+                    const x = centerX + radius * Math.cos(angleRad) - 25;
+                    const y = centerY + radius * Math.sin(angleRad) - 25;
+                    
+                    symbol.style.left = x + 'px';
+                    symbol.style.top = y + 'px';
+                } else {
+                    // Random position for non-zodiac symbols
+                    symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
+                    symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
+                }
                 
                 // Vary size based on intensity and randomness
                 const size = 18 + (intensity * 6) + Math.random() * 20;
