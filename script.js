@@ -242,59 +242,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Get thematically appropriate symbols based on message content
+    // Get deeply thematic symbols with animals and clever associations
     function getThematicSymbols(messageText, isPositive) {
         const lowerText = messageText.toLowerCase();
         
         if (isPositive) {
-            // Love & relationships
-            if (lowerText.includes('love') || lowerText.includes('heart') || lowerText.includes('romance')) {
-                return ['❤️', '💚', '💜', '💙', '💛', '🧡', '💕', '💖', '💗', '💘', '💝', '💞', '💟', '♥', '♡'];
+            // Love & relationships - animals of romance and bonding
+            if (lowerText.includes('love') || lowerText.includes('heart') || lowerText.includes('romance') || lowerText.includes('relationship')) {
+                return ['🦢', '🕊️', '🦋', '🐝', '🦆', '❤️', '💕', '💖', '💗', '💘', '🌹', '🌺', '♥', '♡', '💞'];
             }
-            // Spiritual & divine
-            if (lowerText.includes('spiritual') || lowerText.includes('divine') || lowerText.includes('sacred') || lowerText.includes('god')) {
-                return ['🕉️', '☯️', '✝️', '☪️', '🔯', '☮️', '🕎', '⚛️', '🙏', '🧿', '📿', '⛩️', '🕯️', '👼', '😇'];
+            // Spiritual & divine - sacred animals and mystical symbols
+            if (lowerText.includes('spiritual') || lowerText.includes('divine') || lowerText.includes('sacred') || lowerText.includes('enlighten') || lowerText.includes('meditation')) {
+                return ['🦅', '🕊️', '🦄', '🐉', '🙏', '🕉️', '☯️', '✝️', '☪️', '🔯', '👼', '😇', '🧿', '📿', '⛩️'];
             }
-            // Nature & life
-            if (lowerText.includes('nature') || lowerText.includes('earth') || lowerText.includes('life') || lowerText.includes('grow')) {
-                return ['🌱', '🌿', '🍀', '🌳', '🌲', '🌸', '🌺', '🌻', '🌷', '🌹', '🦋', '🐝', '🌈', '☀️', '🌙'];
+            // Wisdom & knowledge - wise animals
+            if (lowerText.includes('wise') || lowerText.includes('wisdom') || lowerText.includes('learn') || lowerText.includes('knowledge') || lowerText.includes('understand')) {
+                return ['🦉', '🐘', '🦋', '🐢', '📚', '🔮', '✨', '💡', '🧠', '👁️', '🗝️', '💎', '⭐', '🌟', '☆'];
             }
-            // Joy & celebration
-            if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate') || lowerText.includes('party')) {
-                return ['🎉', '🎊', '🥳', '🎈', '🎆', '🎇', '✨', '🌟', '⭐', '💫', '🎭', '🎪', '🎨', '🎵', '🎶'];
+            // Strength & courage - powerful animals
+            if (lowerText.includes('strong') || lowerText.includes('courage') || lowerText.includes('brave') || lowerText.includes('power') || lowerText.includes('confident')) {
+                return ['🦁', '🐅', '🦅', '🐺', '🐻', '🦬', '🦏', '💪', '👑', '🛡️', '⚡', '🔥', '🌟', '✨', '💎'];
             }
-            // Peace & harmony
-            if (lowerText.includes('peace') || lowerText.includes('calm') || lowerText.includes('harmony') || lowerText.includes('zen')) {
-                return ['☮️', '🕊️', '🧘', '☯️', '🌸', '🪷', '💙', '🌊', '💧', '🌙', '⭐', '✨', '🕯️', '🤲'];
+            // Freedom & adventure - free spirits
+            if (lowerText.includes('free') || lowerText.includes('freedom') || lowerText.includes('adventure') || lowerText.includes('explore') || lowerText.includes('journey')) {
+                return ['🦅', '🐎', '🦋', '🐋', '🐬', '🦆', '🌊', '🌬️', '🌈', '🗺️', '⛵', '🎈', '✈️', '🚀', '⭐'];
             }
-            // Success & achievement
-            if (lowerText.includes('success') || lowerText.includes('win') || lowerText.includes('achieve') || lowerText.includes('goal')) {
-                return ['🏆', '🥇', '🎖️', '🏅', '👑', '💰', '💎', '⭐', '🌟', '✨', '🎯', '🎉', '🙌', '👍'];
+            // Joy & playfulness - happy animals
+            if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('fun') || lowerText.includes('play') || lowerText.includes('laugh')) {
+                return ['🐒', '🐧', '🦭', '🐬', '🐕', '🐱', '🦆', '🐥', '🎉', '🎊', '🎈', '✨', '🌟', '💫', '😊'];
+            }
+            // Peace & calm - peaceful animals
+            if (lowerText.includes('peace') || lowerText.includes('calm') || lowerText.includes('tranquil') || lowerText.includes('serene') || lowerText.includes('zen')) {
+                return ['🕊️', '🦢', '🐢', '🦌', '🐰', '🐑', '🌸', '🪷', '☯️', '💙', '🌊', '🌙', '☮️', '🧘', '✨'];
+            }
+            // Growth & renewal - life-giving animals and symbols
+            if (lowerText.includes('grow') || lowerText.includes('new') || lowerText.includes('begin') || lowerText.includes('start') || lowerText.includes('birth')) {
+                return ['🦋', '🐛', '🐝', '🐢', '🌱', '🌿', '🌸', '🌺', '🥚', '🐣', '🐤', '☀️', '🌅', '✨', '⭐'];
+            }
+            // Success & achievement - victorious animals
+            if (lowerText.includes('success') || lowerText.includes('win') || lowerText.includes('achieve') || lowerText.includes('victory') || lowerText.includes('accomplish')) {
+                return ['🦅', '🦁', '🐅', '🐎', '🏆', '🥇', '👑', '💰', '💎', '🎯', '🌟', '⭐', '✨', '🎉', '🙌'];
             }
         } else {
-            // Fear & anxiety
-            if (lowerText.includes('fear') || lowerText.includes('scared') || lowerText.includes('anxiety') || lowerText.includes('worry')) {
-                return ['😰', '😱', '😨', '🌚', '🌑', '☁️', '🌧️', '⛈️', '🌪️', '💀', '👻', '🦇', '🕷️', '🔒'];
+            // Fear & anxiety - fearsome/anxious animals
+            if (lowerText.includes('fear') || lowerText.includes('scared') || lowerText.includes('anxiety') || lowerText.includes('worry') || lowerText.includes('nervous')) {
+                return ['🦇', '🕷️', '🐍', '🦂', '🐀', '🕊️', '😰', '😱', '🌚', '🌑', '☁️', '⛈️', '🌪️', '💀', '👻'];
             }
-            // Anger & rage
-            if (lowerText.includes('anger') || lowerText.includes('mad') || lowerText.includes('rage') || lowerText.includes('furious')) {
-                return ['😡', '🤬', '😠', '💢', '💥', '🔥', '⚡', '💣', '🌋', '🗲', '⚔️', '🗡️', '▲', '▼'];
+            // Anger & aggression - aggressive animals
+            if (lowerText.includes('anger') || lowerText.includes('mad') || lowerText.includes('rage') || lowerText.includes('furious') || lowerText.includes('hate')) {
+                return ['🐅', '🦏', '🐗', '🦈', '🐊', '🐍', '🦂', '🔥', '⚡', '💥', '😡', '🤬', '💢', '⚔️', '🗡️'];
             }
-            // Death & darkness
-            if (lowerText.includes('death') || lowerText.includes('die') || lowerText.includes('dark') || lowerText.includes('evil')) {
-                return ['💀', '☠️', '⚰️', '⚱️', '🖤', '🌑', '🌒', '🌚', '🦇', '🕷️', '🐍', '👹', '👺', '😈'];
+            // Betrayal & deception - sneaky animals
+            if (lowerText.includes('betray') || lowerText.includes('lie') || lowerText.includes('deceive') || lowerText.includes('fake') || lowerText.includes('cheat')) {
+                return ['🐍', '🦊', '🐺', '🕷️', '🦂', '🐀', '👺', '😈', '🎭', '🖤', '⚫', '🌑', '🌚', '💀', '☠️'];
             }
-            // Sadness & depression
-            if (lowerText.includes('sad') || lowerText.includes('depressed') || lowerText.includes('cry') || lowerText.includes('hurt')) {
-                return ['😢', '😭', '💔', '😞', '😔', '☔', '🌧️', '☁️', '🌫️', '💧', '🥀', '🖤', '◼️', '▪️'];
+            // Isolation & loneliness - solitary animals
+            if (lowerText.includes('alone') || lowerText.includes('lonely') || lowerText.includes('isolat') || lowerText.includes('abandon') || lowerText.includes('empty')) {
+                return ['🐺', '🦇', '🐢', '🦉', '🐧', '☁️', '🌑', '🌚', '💔', '😞', '😔', '🖤', '◼️', '▪️', '⚫'];
             }
-            // Destruction & chaos
-            if (lowerText.includes('destroy') || lowerText.includes('break') || lowerText.includes('chaos') || lowerText.includes('war')) {
-                return ['💥', '💣', '🧨', '⚡', '🔥', '🌪️', '🌊', '⚔️', '🗡️', '🔪', '💀', '☠️', '⚠️', '🆘'];
+            // Destruction & chaos - destructive forces
+            if (lowerText.includes('destroy') || lowerText.includes('break') || lowerText.includes('chaos') || lowerText.includes('ruin') || lowerText.includes('devastat')) {
+                return ['🦈', '🐊', '🐍', '🕷️', '🦂', '💥', '🔥', '⚡', '🌪️', '🌋', '💣', '⚔️', '💀', '☠️', '⚠️'];
+            }
+            // Sadness & depression - melancholy animals and symbols
+            if (lowerText.includes('sad') || lowerText.includes('depress') || lowerText.includes('cry') || lowerText.includes('hurt') || lowerText.includes('pain')) {
+                return ['🐧', '🦭', '🐢', '🦉', '💧', '☔', '🌧️', '☁️', '💔', '😢', '😭', '🥀', '🖤', '🌑', '◼️'];
+            }
+            // Toxic & poisonous - venomous animals
+            if (lowerText.includes('toxic') || lowerText.includes('poison') || lowerText.includes('venom') || lowerText.includes('corrupt') || lowerText.includes('contamina')) {
+                return ['🐍', '🕷️', '🦂', '🐀', '🦠', '☠️', '💀', '☢️', '☣️', '⚠️', '🖤', '💚', '🤢', '🤮', '😵'];
             }
         }
         
-        // Return general positive or negative symbols if no theme matches
+        // Return general positive or negative symbols if no specific theme matches
         return isPositive ? positiveSymbols : negativeSymbols;
     }
 
