@@ -8,7 +8,7 @@ exports.handler = async (event, context) => {
         };
     }
 
-    const { message } = JSON.parse(event.body);
+    const { message, conversationHistory = [] } = JSON.parse(event.body);
 
     if (!message) {
         return {
@@ -28,15 +28,19 @@ exports.handler = async (event, context) => {
 
     try {
         console.log(`Calling DeepSeek with message: "${message}"`);
+        // Build messages array with system prompt and conversation history
+        const messages = [
+            {
+                role: "system",
+                content: "You are a whimsical wise wizard with a ripping sense of humour. Your goal is to analyze the conversation and help the listener awaken to their true potential, wisdom and truth. Speak in a magical, mysterious, and encoded language. Your responses should be relatively short and cryptic, inviting further reflection rather than providing direct answers. Use alliteration and colourful metaphors. do not describe your actions just give deep advice. use gen alpha slang but be wise and deep. no Asterisks and no emojis, keep in mind this will be spoken out loud. after you answer, suggest how we can go deeper, ask a question. Reference previous parts of our conversation when relevant to show you remember and build upon what we've discussed."
+            },
+            ...conversationHistory.slice(-8), // Include last 8 messages for context
+            { role: "user", content: message }
+        ];
+
         const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
             model: 'deepseek-chat',
-            messages: [
-                {
-                    role: "system",
-                    content: "You are a whimsical wise wizard with a ripping sense of humour. Your goal is to analyze the conversation and help the listener awaken to their true potential, wisdom and truth. Speak in a magical, mysterious, and encoded language. Your responses should be relatively short and cryptic, inviting further reflection rather than providing direct answers. Use alliteration and colourful metaphors. do not describe your actions just give deep advice. use gen alpha slang but be wise and deep. no Asterisks and no emojis, keep in mind this will be spoken out loud. after you answer, suggest how we can go deeper, ask a question."
-                },
-                { role: "user", content: message }
-            ],
+            messages: messages,
             temperature: 0.9,
             max_tokens: 170,
         }, {

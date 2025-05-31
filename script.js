@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let recordingTimeout;
     let backgroundMusic = null;
     let musicStarted = false;
+    let conversationHistory = [];
 
     // Massively expanded vibrational symbol arrays with HTML entities and mystical symbols
     const positiveSymbols = [
@@ -642,12 +643,23 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleWizardSpeaking(true);
 
             try {
+                // Add current message to conversation history
+                conversationHistory.push({ role: "user", content: messageText });
+                
+                // Keep only last 10 messages (5 exchanges) to manage memory
+                if (conversationHistory.length > 10) {
+                    conversationHistory = conversationHistory.slice(-10);
+                }
+                
                 const response = await fetch('/.netlify/functions/deepseek-chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ message: messageText }),
+                    body: JSON.stringify({ 
+                        message: messageText,
+                        conversationHistory: conversationHistory 
+                    }),
                 });
                 
                 if (!response.ok) {
@@ -665,6 +677,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const data = await response.json();
                 if (data && data.reply) {
+                    // Add wizard's response to conversation history
+                    conversationHistory.push({ role: "assistant", content: data.reply });
                     displayWizardResponse(data.reply);
                 } else {
                     console.error("Invalid data structure from backend:", data);
