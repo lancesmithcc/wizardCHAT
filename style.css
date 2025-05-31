@@ -21,13 +21,50 @@ body.vibrational-pulse {
 
 @keyframes vibrational-background-pulse {
     0% {
-        background-color: #000000;
+        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 70%);
     }
     50% {
-        background-color: var(--vibe-color, #000000);
+        background: radial-gradient(circle, var(--vibe-color, #000000) 30%, #000000 90%);
     }
     100% {
-        background-color: #000000;
+        background: radial-gradient(circle, var(--vibe-color, #000000) 0%, #000000 70%);
+    }
+}
+
+.astrological-wheel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70vmin;
+    height: 70vmin;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+.zodiac-symbol {
+    position: absolute;
+    font-size: 24px;
+    color: var(--aurora-color1, #4a00e0);
+    text-shadow: 0 0 8px var(--aurora-color1, #4a00e0);
+    animation: aurora-text-zodiac 15s ease infinite alternate;
+    user-select: none;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes aurora-text-zodiac {
+    0% { 
+        color: var(--aurora-color1); 
+        text-shadow: 0 0 8px var(--aurora-color1), 0 0 12px var(--aurora-color2); 
+    }
+    50% { 
+        color: var(--aurora-color2); 
+        text-shadow: 0 0 8px var(--aurora-color2), 0 0 12px var(--aurora-color3); 
+    }
+    100% { 
+        color: var(--aurora-color3); 
+        text-shadow: 0 0 8px var(--aurora-color3), 0 0 12px var(--aurora-color1); 
     }
 }
 

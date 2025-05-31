@@ -6,11 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const userChatLog = document.getElementById('user-chat-log');
     const wizardSpeechBubble = document.getElementById('wizard-speech-bubble');
     const vibrationalSymbols = document.querySelector('.vibrational-symbols');
+    const astrologicalWheel = document.querySelector('.astrological-wheel');
 
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
     let recordingTimeout;
+    let backgroundMusic = null;
+    let musicStarted = false;
 
     // Massively expanded vibrational symbol arrays with HTML entities and mystical symbols
     const positiveSymbols = [
@@ -213,6 +216,87 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--vibe-color', '#000000');
     }
 
+    // Create permanent astrological wheel
+    function createAstrologicalWheel() {
+        if (!astrologicalWheel) return;
+        
+        const zodiacSigns = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+        
+        zodiacSigns.forEach((sign, index) => {
+            const symbol = document.createElement('div');
+            symbol.className = 'zodiac-symbol';
+            symbol.textContent = sign;
+            
+            const angle = index * 30; // 30 degrees apart
+            const radius = 45; // 45% of container
+            const angleRad = (angle * Math.PI) / 180;
+            
+            const x = 50 + radius * Math.cos(angleRad);
+            const y = 50 + radius * Math.sin(angleRad);
+            
+            symbol.style.left = x + '%';
+            symbol.style.top = y + '%';
+            
+            astrologicalWheel.appendChild(symbol);
+        });
+    }
+
+    // Get thematically appropriate symbols based on message content
+    function getThematicSymbols(messageText, isPositive) {
+        const lowerText = messageText.toLowerCase();
+        
+        if (isPositive) {
+            // Love & relationships
+            if (lowerText.includes('love') || lowerText.includes('heart') || lowerText.includes('romance')) {
+                return ['❤️', '💚', '💜', '💙', '💛', '🧡', '💕', '💖', '💗', '💘', '💝', '💞', '💟', '♥', '♡'];
+            }
+            // Spiritual & divine
+            if (lowerText.includes('spiritual') || lowerText.includes('divine') || lowerText.includes('sacred') || lowerText.includes('god')) {
+                return ['🕉️', '☯️', '✝️', '☪️', '🔯', '☮️', '🕎', '⚛️', '🙏', '🧿', '📿', '⛩️', '🕯️', '👼', '😇'];
+            }
+            // Nature & life
+            if (lowerText.includes('nature') || lowerText.includes('earth') || lowerText.includes('life') || lowerText.includes('grow')) {
+                return ['🌱', '🌿', '🍀', '🌳', '🌲', '🌸', '🌺', '🌻', '🌷', '🌹', '🦋', '🐝', '🌈', '☀️', '🌙'];
+            }
+            // Joy & celebration
+            if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate') || lowerText.includes('party')) {
+                return ['🎉', '🎊', '🥳', '🎈', '🎆', '🎇', '✨', '🌟', '⭐', '💫', '🎭', '🎪', '🎨', '🎵', '🎶'];
+            }
+            // Peace & harmony
+            if (lowerText.includes('peace') || lowerText.includes('calm') || lowerText.includes('harmony') || lowerText.includes('zen')) {
+                return ['☮️', '🕊️', '🧘', '☯️', '🌸', '🪷', '💙', '🌊', '💧', '🌙', '⭐', '✨', '🕯️', '🤲'];
+            }
+            // Success & achievement
+            if (lowerText.includes('success') || lowerText.includes('win') || lowerText.includes('achieve') || lowerText.includes('goal')) {
+                return ['🏆', '🥇', '🎖️', '🏅', '👑', '💰', '💎', '⭐', '🌟', '✨', '🎯', '🎉', '🙌', '👍'];
+            }
+        } else {
+            // Fear & anxiety
+            if (lowerText.includes('fear') || lowerText.includes('scared') || lowerText.includes('anxiety') || lowerText.includes('worry')) {
+                return ['😰', '😱', '😨', '🌚', '🌑', '☁️', '🌧️', '⛈️', '🌪️', '💀', '👻', '🦇', '🕷️', '🔒'];
+            }
+            // Anger & rage
+            if (lowerText.includes('anger') || lowerText.includes('mad') || lowerText.includes('rage') || lowerText.includes('furious')) {
+                return ['😡', '🤬', '😠', '💢', '💥', '🔥', '⚡', '💣', '🌋', '🗲', '⚔️', '🗡️', '▲', '▼'];
+            }
+            // Death & darkness
+            if (lowerText.includes('death') || lowerText.includes('die') || lowerText.includes('dark') || lowerText.includes('evil')) {
+                return ['💀', '☠️', '⚰️', '⚱️', '🖤', '🌑', '🌒', '🌚', '🦇', '🕷️', '🐍', '👹', '👺', '😈'];
+            }
+            // Sadness & depression
+            if (lowerText.includes('sad') || lowerText.includes('depressed') || lowerText.includes('cry') || lowerText.includes('hurt')) {
+                return ['😢', '😭', '💔', '😞', '😔', '☔', '🌧️', '☁️', '🌫️', '💧', '🥀', '🖤', '◼️', '▪️'];
+            }
+            // Destruction & chaos
+            if (lowerText.includes('destroy') || lowerText.includes('break') || lowerText.includes('chaos') || lowerText.includes('war')) {
+                return ['💥', '💣', '🧨', '⚡', '🔥', '🌪️', '🌊', '⚔️', '🗡️', '🔪', '💀', '☠️', '⚠️', '🆘'];
+            }
+        }
+        
+        // Return general positive or negative symbols if no theme matches
+        return isPositive ? positiveSymbols : negativeSymbols;
+    }
+
     // Clear existing symbols
     function clearVibrationalSymbols() {
         if (!vibrationalSymbols) return;
@@ -220,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Spawn magical symbols (now persist until next query)
-    function spawnVibrationalSymbols(vibrationalLevel, messageLength) {
+    function spawnVibrationalSymbols(vibrationalLevel, messageLength, messageText) {
         if (!vibrationalSymbols) return;
         
         // Clear previous symbols first
@@ -231,34 +315,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // Increase symbol count significantly
         const symbolCount = Math.min(20, Math.max(3, (intensity * 4) + Math.floor(messageLength / 15)));
         
+        // Get thematically appropriate symbols for this message
+        const thematicSymbols = getThematicSymbols(messageText, isPositive);
+        
         for (let i = 0; i < symbolCount; i++) {
             setTimeout(() => {
                 const symbol = document.createElement('div');
                 symbol.className = `vibrational-symbol ${isPositive ? 'positive' : 'negative'}`;
                 
-                // Choose random symbol from appropriate array
-                const symbolArray = isPositive ? positiveSymbols : negativeSymbols;
+                // Choose from thematic symbols (70% chance) or general symbols (30% chance)
+                const useThematic = Math.random() < 0.7;
+                const symbolArray = useThematic ? thematicSymbols : (isPositive ? positiveSymbols : negativeSymbols);
                 const chosenSymbol = symbolArray[Math.floor(Math.random() * symbolArray.length)];
                 symbol.textContent = chosenSymbol;
                 
-                // Position zodiac symbols in correct astrological positions
-                if (zodiacPositions[chosenSymbol]) {
-                    const position = zodiacPositions[chosenSymbol];
-                    const centerX = window.innerWidth / 2;
-                    const centerY = window.innerHeight / 2;
-                    const radius = Math.min(window.innerWidth, window.innerHeight) * 0.35;
-                    
-                    const angleRad = (position.angle * Math.PI) / 180;
-                    const x = centerX + radius * Math.cos(angleRad) - 25;
-                    const y = centerY + radius * Math.sin(angleRad) - 25;
-                    
-                    symbol.style.left = x + 'px';
-                    symbol.style.top = y + 'px';
-                } else {
-                    // Random position for non-zodiac symbols
-                    symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
-                    symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
-                }
+                // Random position (zodiac symbols are now permanent in the wheel)
+                symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
+                symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
                 
                 // Vary size based on intensity and randomness
                 const size = 18 + (intensity * 6) + Math.random() * 20;
@@ -271,6 +344,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Symbols now persist until next query (no automatic removal)
             }, i * 150); // Faster stagger
+        }
+    }
+
+    // Initialize background music
+    function initializeBackgroundMusic() {
+        backgroundMusic = new Audio('./wizardry.mp3');
+        backgroundMusic.loop = true;
+        backgroundMusic.volume = 0.3; // 30% volume
+        
+        // Handle loading events
+        backgroundMusic.onloadstart = () => console.log('Background music loading started');
+        backgroundMusic.oncanplay = () => console.log('Background music ready to play');
+        backgroundMusic.onerror = (e) => console.error('Background music error:', e);
+        
+        console.log("Background music initialized");
+    }
+
+    // Start background music (called after first query)
+    function startBackgroundMusic() {
+        if (!musicStarted && backgroundMusic) {
+            backgroundMusic.play().then(() => {
+                console.log("Background music started");
+                musicStarted = true;
+            }).catch(err => {
+                console.error("Error starting background music:", err);
+            });
         }
     }
 
@@ -314,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.audioUrl) {
                     console.log('Playing audio from URL:', data.audioUrl);
                     const audio = new Audio(data.audioUrl);
+                    audio.volume = 1.0; // 100% volume for Kokoro voice
                     
                     audio.onloadstart = () => console.log('Audio loading started');
                     audio.oncanplay = () => console.log('Audio can start playing');
@@ -506,10 +606,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (messageText) {
             // Analyze vibrational energy and spawn symbols
             const vibrationalLevel = analyzeVibrationalEnergy(messageText);
-            spawnVibrationalSymbols(vibrationalLevel, messageText.length);
+            spawnVibrationalSymbols(vibrationalLevel, messageText.length, messageText);
             
             // Set background color based on vibrational energy
             setVibrationalBackground(vibrationalLevel, messageText);
+            
+            // Start background music after first query
+            if (!musicStarted) {
+                startBackgroundMusic();
+            }
             
             appendMessage(messageText, 'user-message');
             chatInput.value = '';
@@ -582,4 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initializeMicrophone();
+    createAstrologicalWheel();
+    initializeBackgroundMusic();
 });
