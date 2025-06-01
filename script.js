@@ -622,6 +622,9 @@ document.addEventListener('DOMContentLoaded', () => {
             wizardSpeechBubble.style.animation = '';
             wizardSpeechBubble.style.color = '';
             
+            // Start TTS immediately when typing begins
+            speakWizardResponse(text);
+            
             // Typing effect
             let charIndex = 0;
             const typingSpeed = 30; // milliseconds between characters
@@ -632,8 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     charIndex++;
                 } else {
                     clearInterval(typeInterval);
-                    // Start TTS after typing is complete
-                    speakWizardResponse(text);
+                    // TTS already started above
                 }
             }, typingSpeed);
         }
