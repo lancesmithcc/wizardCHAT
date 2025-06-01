@@ -785,6 +785,7 @@ body.vibrational-pulse {
         width: 98%;
         margin: 8px auto;
         padding: 8px;
+        filter: rotate(2deg);
     }
     
     .slider-container {

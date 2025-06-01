@@ -894,7 +894,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ 
                         message: messageText,
                         conversationHistory: conversationHistory,
-                        maxTokens: getTokenCount(responseLengthSlider.value)
+                        maxTokens: getTokenCount(responseLengthSlider.value),
+                        responseMode: getResponseMode(responseLengthSlider.value)
                     }),
                 });
                 
@@ -972,17 +973,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Response Length Control
     function getTokenCount(sliderValue) {
         const tokenMap = {
-            1: 50,   // Cryptic - very short responses
-            2: 80,   // Moderate Wisdom - current default
-            3: 150,  // Deep Insights - longer responses  
-            4: 250   // Profound - maximum depth
+            1: 100,  // Cryptic - mysterious questions
+            2: 300,  // Moderate Wisdom - balanced responses
+            3: 700,  // Deep Insights - detailed responses  
+            4: 1441  // Profound - maximum depth
         };
-        return tokenMap[sliderValue] || 80;
+        return tokenMap[sliderValue] || 300;
+    }
+
+    function getResponseMode(sliderValue) {
+        const modes = {
+            1: "cryptic",      // Just ask mysterious questions
+            2: "moderate",     // Balanced wisdom
+            3: "deep",         // Detailed insights
+            4: "profound"      // Maximum depth and analysis
+        };
+        return modes[sliderValue] || "moderate";
     }
 
     function updateLengthIndicator(value) {
         const indicators = {
-            1: "Cryptic Whispers",
+            1: "Cryptic Questions",
             2: "Moderate Wisdom", 
             3: "Deep Insights",
             4: "Profound Mysteries"

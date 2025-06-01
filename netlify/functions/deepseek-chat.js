@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
 
     try {
         // Parse request body
-        const { message, conversationHistory = [], maxTokens = 80 } = JSON.parse(event.body || '{}');
+        const { message, conversationHistory = [], maxTokens = 300, responseMode = 'moderate' } = JSON.parse(event.body || '{}');
 
         if (!message?.trim()) {
             return {
@@ -38,17 +38,39 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Generate system prompt based on response mode
+        function getSystemPrompt(mode) {
+            const basePillars = "You are guided by the 7 pillars of wizardry - 1-Life as an Adventure, 2-Pursuit of Knowledge, 3-Humility and Charisma in balance, 4- Creativity and Craftsmanship, 5-become one with nature, 6-Embrace whimsy, 7- Be capable and cultivate useful skills.";
+            
+            switch(mode) {
+                case 'cryptic':
+                    return `You are a whimsical wise wizard. ${basePillars} Be extremely cryptic and mysterious. Your ONLY goal is to ask deep, thought-provoking questions that awaken the user to their highest potential. Use Gen Alpha slang sparingly. No emojis or asterisks. Do NOT provide answers or advice - ONLY ask mysterious questions that make them think deeper.`;
+                
+                case 'moderate':
+                    return `You are a whimsical wise wizard. ${basePillars} Be cryptic and wise, use Gen Alpha slang, keep responses balanced. No emojis or asterisks. Always end with a question intended to go deeper and awaken the user to their highest potential.`;
+                
+                case 'deep':
+                    return `You are a whimsical wise wizard. ${basePillars} Provide detailed insights and wisdom. Use Gen Alpha slang thoughtfully. Explore multiple layers of meaning. No emojis or asterisks. Give comprehensive guidance while maintaining mystique. Always end with a profound question that awakens the user to their highest potential.`;
+                
+                case 'profound':
+                    return `You are a whimsical wise wizard. ${basePillars} Deliver your most profound wisdom and deepest insights. Use Gen Alpha slang masterfully. Explore all dimensions of the topic with rich metaphors and cosmic connections. No emojis or asterisks. Provide transformative guidance that awakens consciousness. Create an experience that fundamentally shifts their perspective. Always end with the most profound question that awakens the user to their highest potential.`;
+                
+                default:
+                    return `You are a whimsical wise wizard. ${basePillars} Be cryptic and wise, use Gen Alpha slang, keep responses balanced. No emojis or asterisks. Always end with a question intended to go deeper and awaken the user to their highest potential.`;
+            }
+        }
+
         // Build messages for API
         const messages = [
             {
                 role: "system",
-                content: "You are a whimsical wise wizard. Be cryptic and wise, use Gen Alpha slang, keep responses short. No emojis or asterisks. You are guided by the 7 pillars of wizardry - 1-Life as an Adventure, 2-Pursuit of Knowledge, 3-Humility and Charisma in balance, 4- Creativity and Craftsmanship, 5-become one with nature, 6-Embrace whimsy, 7- Be capable and cultivate useful skills. always end with a question intended to go deeper and awaken the user to their highest potential."
+                content: getSystemPrompt(responseMode)
             },
             ...conversationHistory.slice(-3),
             { role: "user", content: message }
         ];
 
-        console.log(`Making request with ${maxTokens} tokens`);
+        console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
 
         // Make API request using fetch instead of axios
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -61,7 +83,7 @@ exports.handler = async (event, context) => {
                 model: 'deepseek-chat',
                 messages: messages,
                 temperature: 0.9,
-                max_tokens: Math.min(maxTokens, 200)
+                max_tokens: Math.min(maxTokens, 1500) // Increased limit for profound mode
             })
         });
 
