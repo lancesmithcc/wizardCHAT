@@ -583,12 +583,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showConjuringState() {
+        if (!wizardSpeechBubble) {
+            console.error("Wizard speech bubble element not found!");
+            return;
+        }
+        
+        // Clear any existing content and add conjuring class
+        wizardSpeechBubble.textContent = 'Conjuring...';
+        wizardSpeechBubble.classList.add('conjuring');
+        wizardSpeechBubble.style.animation = '';
+        wizardSpeechBubble.style.color = '';
+    }
+
+    function clearConjuringState() {
+        if (!wizardSpeechBubble) return;
+        
+        wizardSpeechBubble.classList.remove('conjuring');
+    }
+
     function displayWizardResponse(text, isError = false) {
         if (!wizardSpeechBubble) {
             console.error("Wizard speech bubble element not found!");
             appendMessage(text, isError ? 'wizard-message error' : 'wizard-message');
             return;
         }
+        
+        // Clear conjuring state first
+        clearConjuringState();
         
         if (isError) {
             wizardSpeechBubble.textContent = text;
@@ -780,6 +802,9 @@ document.addEventListener('DOMContentLoaded', () => {
             appendMessage(messageText, 'user-message');
             chatInput.value = '';
             toggleWizardSpeaking(true);
+
+            // Show conjuring loading state
+            showConjuringState();
 
             try {
                 // Add current message to conversation history

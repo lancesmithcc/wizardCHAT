@@ -609,6 +609,42 @@ body.vibrational-pulse {
     color:#999 !important;
 }
 
+/* Conjuring loading text with gradient shine */
+.wizard-speech.conjuring {
+    position: relative;
+    font-style: italic;
+    text-align: center;
+    color: var(--aurora-color2) !important;
+    overflow: hidden;
+}
+
+.wizard-speech.conjuring::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.8) 50%, 
+        transparent 100%);
+    animation: gradient-shine 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes gradient-shine {
+    0% {
+        left: -100%;
+    }
+    50% {
+        left: 100%;
+    }
+    100% {
+        left: -100%;
+    }
+}
+
 /* Heartbeat animation for speech bubble when wizard is speaking */
 #wizard-ascii.speaking + .wizard-speech {
     animation: aurora-text-wizard-response 33s ease infinite alternate, speech-bubble-heartbeat 5s infinite;
