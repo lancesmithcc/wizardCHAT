@@ -538,8 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let processedText = text;
         
         // Gen Alpha slang pronunciation fixes
-        processedText = processedText.replace(/\bgyatt\b/gi, 'gyacht');
-        processedText = processedText.replace(/\bgyat\b/gi, 'gyacht');
+        processedText = processedText.replace(/\bgyatt\b/gi, 'gya-acht');
+        processedText = processedText.replace(/\bgyat\b/gi, 'gya-acht');
         processedText = processedText.replace(/\brizz\b/gi, 'rizz');
         processedText = processedText.replace(/\bskibidi\b/gi, 'skib-uh-dee');
         processedText = processedText.replace(/\bsigma\b/gi, 'sig-mah');
