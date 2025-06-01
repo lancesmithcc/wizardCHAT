@@ -1,9 +1,13 @@
 const axios = require('axios');
 
 exports.handler = async (event, context) => {
+    // Add function timeout safety
+    context.callbackWaitsForEmptyEventLoop = false;
+    
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
@@ -15,6 +19,7 @@ exports.handler = async (event, context) => {
         console.error('Invalid JSON in request body:', parseError.message);
         return {
             statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: 'Invalid JSON in request body' })
         };
     }
@@ -24,6 +29,7 @@ exports.handler = async (event, context) => {
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
         return {
             statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: 'Message is required and must be a non-empty string' })
         };
     }
@@ -31,6 +37,7 @@ exports.handler = async (event, context) => {
     if (!Array.isArray(conversationHistory)) {
         return {
             statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: 'Conversation history must be an array' })
         };
     }
@@ -40,6 +47,7 @@ exports.handler = async (event, context) => {
         console.error('DeepSeek API key is not configured on the server.');
         return {
             statusCode: 500,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: 'DeepSeek API key not configured on server. Contact the server mage.' })
         };
     }
@@ -60,53 +68,32 @@ exports.handler = async (event, context) => {
 
         console.log(`Payload size: ${JSON.stringify(messages).length} characters`);
 
-        // Retry logic for transient failures
-        let response;
-        const maxRetries = 2;
-        
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                console.log(`Attempt ${attempt}/${maxRetries} to call DeepSeek`);
-                response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
-                    model: 'deepseek-chat',
-                    messages: messages,
-                    temperature: 0.9,
-                    max_tokens: 150,
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: 15000 // Further reduced timeout for retry attempts
-                });
-                break; // Success, exit retry loop
-            } catch (error) {
-                const isRetryable = error.code === 'ECONNABORTED' || 
-                                  error.code === 'ETIMEDOUT' ||
-                                  error.code === 'ENOTFOUND' ||
-                                  (error.response && [502, 503, 504].includes(error.response.status));
-                
-                if (attempt < maxRetries && isRetryable) {
-                    const delay = attempt * 1000; // Progressive delay: 1s, 2s
-                    console.log(`Retryable error on attempt ${attempt}, retrying in ${delay}ms:`, error.message);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                } else {
-                    throw error; // Not retryable or max retries reached
-                }
-            }
-        }
+        const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
+            model: 'deepseek-chat',
+            messages: messages,
+            temperature: 0.9,
+            max_tokens: 150,
+        }, {
+            headers: {
+                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            timeout: 12000 // Reduced timeout to prevent function timeout
+        });
 
         if (response.data && response.data.choices && response.data.choices.length > 0 && response.data.choices[0].message) {
             const wizardResponse = response.data.choices[0].message.content;
             console.log(`DeepSeek Response: "${wizardResponse}"`);
             return {
                 statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reply: wizardResponse.trim() })
             };
         } else {
             console.error('Unexpected response structure from DeepSeek:', response.data);
             return {
                 statusCode: 500,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ error: 'The mystic energies returned an unexpected vision (Invalid DeepSeek response structure)' })
             };
         }
@@ -124,17 +111,20 @@ exports.handler = async (event, context) => {
             if (error.response.status === 401) {
                 return {
                     statusCode: 401,
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ error: 'The ancient seals reject this key (Invalid DeepSeek API Key or Quota Exceeded).' })
                 };
             } else if (error.response.status === 502 || error.response.status === 503) {
                 console.error('DeepSeek service temporarily unavailable');
                 return {
                     statusCode: 502,
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ error: 'The mystical servers are temporarily overwhelmed. The wizard shall return shortly...' })
                 };
             }
             return {
                 statusCode: error.response.status,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ error: `The astral plane reports an anomaly: ${error.response.data?.error?.message || error.message}` })
             };
         } else if (error.request) {
@@ -143,6 +133,7 @@ exports.handler = async (event, context) => {
             console.error('- Request config:', error.config);
             return {
                 statusCode: 503,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ error: 'The carrier pigeons seem to have lost their way (No response from DeepSeek)' })
             };
         } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
@@ -151,6 +142,7 @@ exports.handler = async (event, context) => {
             console.error('- Code:', error.code);
             return {
                 statusCode: 504,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ error: 'The mystical energies are flowing slowly today (Request timeout)' })
             };
         } else {
@@ -160,6 +152,7 @@ exports.handler = async (event, context) => {
             console.error('- Stack:', error.stack);
             return {
                 statusCode: 500,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ error: 'A magical mishap occurred before the spell could be cast (DeepSeek request setup failed)' })
             };
         }

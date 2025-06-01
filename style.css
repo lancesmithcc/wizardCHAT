@@ -8,6 +8,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    max-height: 100vh; /* Prevent content from exceeding viewport height */
     overflow: hidden; /* Prevent scrollbars from animation */
     animation: aurora-bg 20s ease infinite alternate;
     position: relative;
@@ -685,5 +686,107 @@ body.vibrational-pulse {
         border-color: #8B00FF;
         box-shadow: 0 0 15px #8B00FF, 0 0 25px #8B00FF;
         transform: rotate(2deg) scale(1);
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 10px;
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+    
+    .chat-controls {
+        width: 95%;
+        margin-bottom: 10px;
+    }
+    
+    #chat-input {
+        width: 60%;
+        padding: 15px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .chat-log {
+        width: 95%;
+        max-height: 200px;
+    }
+    
+    .wizard-speech {
+        width: 95%;
+        padding: 10px;
+        font-size: 0.85em;
+    }
+    
+    .astrological-wheel {
+        width: 60vmin;
+        height: 60vmin;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 98%;
+        padding: 5px;
+        max-height: 98vh;
+    }
+    
+    .header-row {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .chat-controls {
+        width: 98%;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    #chat-input {
+        width: 100%;
+        margin-bottom: 10px;
+        margin-right: 0;
+    }
+    
+    #send-button {
+        width: 100%;
+        padding: 15px;
+    }
+    
+    .chat-log {
+        width: 98%;
+        max-height: 150px;
+        padding: 10px;
+    }
+    
+    .wizard-speech {
+        width: 98%;
+        padding: 8px;
+        font-size: 0.8em;
+    }
+    
+    .astrological-wheel {
+        width: 50vmin;
+        height: 50vmin;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+    .container {
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+    
+    .chat-log {
+        max-height: 100px;
+    }
+    
+    .wizard-speech {
+        padding: 5px;
+        font-size: 0.75em;
     }
 } 
