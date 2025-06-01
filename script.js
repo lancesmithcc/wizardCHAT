@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeBackgroundMusic() {
         backgroundMusic = new Audio('./wizardry.mp3');
         backgroundMusic.loop = true;
-        backgroundMusic.volume = 0.3; // 30% volume
+        backgroundMusic.volume = 0; // Start at 0 volume for fade in
         
         // Handle loading events
         backgroundMusic.onloadstart = () => console.log('Background music loading started');
@@ -470,12 +470,32 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Background music initialized");
     }
 
-    // Start background music (called after first query)
+    // Start background music with fade in (called after first query)
     function startBackgroundMusic() {
         if (!musicStarted && backgroundMusic) {
             backgroundMusic.play().then(() => {
-                console.log("Background music started");
+                console.log("Background music started, fading in...");
                 musicStarted = true;
+                
+                // Fade in over 3 seconds
+                const fadeInDuration = 3000; // 3 seconds
+                const targetVolume = 0.3; // 30% final volume
+                const fadeSteps = 60; // 60 steps for smooth fade
+                const stepDuration = fadeInDuration / fadeSteps;
+                const volumeIncrement = targetVolume / fadeSteps;
+                
+                let currentStep = 0;
+                const fadeInterval = setInterval(() => {
+                    currentStep++;
+                    backgroundMusic.volume = Math.min(volumeIncrement * currentStep, targetVolume);
+                    
+                    if (currentStep >= fadeSteps) {
+                        clearInterval(fadeInterval);
+                        backgroundMusic.volume = targetVolume;
+                        console.log("Background music fade in complete");
+                    }
+                }, stepDuration);
+                
             }).catch(err => {
                 console.error("Error starting background music:", err);
             });
