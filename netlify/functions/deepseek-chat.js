@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
 
     try {
         // Parse request body
-        const { message, conversationHistory = [], maxTokens = 300, responseMode = 'moderate' } = JSON.parse(event.body || '{}');
+        const { message, conversationHistory = [], maxTokens = 300, responseMode = 'moderate', isChunk = false, chunkNumber = 1 } = JSON.parse(event.body || '{}');
 
         if (!message?.trim()) {
             return {
@@ -76,17 +76,25 @@ exports.handler = async (event, context) => {
         console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
         const startTime = Date.now();
 
-        // Make API request with timeout - much longer for longer responses
+        // Use conservative token limits for initial chunk to avoid timeouts
+        let actualTokens = maxTokens;
+        if (responseMode === 'profound' && !isChunk) {
+            actualTokens = Math.min(maxTokens, 600); // Start with 600 tokens for profound
+        } else if (responseMode === 'deep' && !isChunk) {
+            actualTokens = Math.min(maxTokens, 500); // Start with 500 tokens for deep
+        }
+        
+        // Shorter timeouts for chunked approach
         const controller = new AbortController();
         let timeoutMs;
         switch(responseMode) {
-            case 'cryptic': timeoutMs = 30000; break;    // 30s for cryptic
-            case 'moderate': timeoutMs = 45000; break;   // 45s for moderate  
-            case 'deep': timeoutMs = 75000; break;       // 75s for deep
-            case 'profound': timeoutMs = 120000; break;  // 2 minutes for profound
-            default: timeoutMs = 45000;
+            case 'cryptic': timeoutMs = 25000; break;    // 25s for cryptic
+            case 'moderate': timeoutMs = 30000; break;   // 30s for moderate  
+            case 'deep': timeoutMs = 35000; break;       // 35s for deep
+            case 'profound': timeoutMs = 40000; break;   // 40s for profound
+            default: timeoutMs = 30000;
         }
-        console.log(`Setting timeout to ${timeoutMs}ms for ${responseMode} mode`);
+        console.log(`Setting timeout to ${timeoutMs}ms for ${responseMode} mode, tokens: ${actualTokens}`);
         
         // Retry logic with exponential backoff
         let response;
@@ -111,7 +119,7 @@ exports.handler = async (event, context) => {
                         model: 'deepseek-chat',
                         messages: messages,
                         temperature: 0.85, // Slightly lower for more consistent responses
-                        max_tokens: Math.min(maxTokens, 2000), // Increased max tokens to 2000
+                        max_tokens: actualTokens, // Use conservative token limit
                         stream: false, // Ensure we get complete response
                         top_p: 0.95, // Add top_p for better quality
                         frequency_penalty: 0.1, // Slight penalty to reduce repetition
@@ -175,6 +183,8 @@ exports.handler = async (event, context) => {
 
         const data = await response.json();
         const reply = data.choices?.[0]?.message?.content?.trim();
+        const finishReason = data.choices?.[0]?.finish_reason;
+        const usage = data.usage;
 
         if (!reply) {
             return {
@@ -187,13 +197,28 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Check if response was truncated due to token limit
+        const wasTruncated = finishReason === 'length';
+        const tokensUsed = usage?.completion_tokens || 0;
+        const shouldContinue = wasTruncated && tokensUsed >= (actualTokens * 0.9); // If used 90% of tokens and truncated
+        
+        console.log(`Response: ${tokensUsed} tokens, finish_reason: ${finishReason}, truncated: ${wasTruncated}, should_continue: ${shouldContinue}`);
+
         return {
             statusCode: 200,
             headers: { 
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: JSON.stringify({ reply })
+            body: JSON.stringify({ 
+                reply,
+                wasTruncated,
+                shouldContinue,
+                tokensUsed,
+                requestedTokens: actualTokens,
+                maxTokens,
+                chunkNumber
+            })
         };
 
     } catch (error) {

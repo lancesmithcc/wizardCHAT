@@ -723,6 +723,38 @@ document.addEventListener('DOMContentLoaded', () => {
         wizardSpeechBubble.appendChild(retryButton);
     }
 
+    function appendToWizardResponse(additionalText) {
+        if (!wizardSpeechBubble) {
+            console.error("Wizard speech bubble element not found!");
+            return;
+        }
+        
+        // Get current text and append
+        const currentText = wizardSpeechBubble.textContent || '';
+        const fullText = currentText + additionalText;
+        
+        // Clear and restart typing effect with full text
+        wizardSpeechBubble.textContent = '';
+        wizardSpeechBubble.style.color = '';
+        
+        // Continue TTS with additional text
+        speakWizardResponse(additionalText);
+        
+        // Typing effect for the additional text only
+        let charIndex = currentText.length;
+        function typeChar() {
+            if (charIndex < fullText.length) {
+                wizardSpeechBubble.textContent = fullText.substring(0, charIndex + 1);
+                charIndex++;
+                setTimeout(typeChar, 30);
+            }
+        }
+        
+        // Set the current text immediately, then type the new part
+        wizardSpeechBubble.textContent = currentText;
+        typeChar();
+    }
+
     function displayWizardResponse(text, isError = false) {
         if (!wizardSpeechBubble) {
             console.error("Wizard speech bubble element not found!");
@@ -966,9 +998,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const data = await response.json();
                 if (data && data.reply) {
-                    // Add wizard's response to conversation history
-                    conversationHistory.push({ role: "assistant", content: data.reply });
-                    displayWizardResponse(data.reply);
+                    // Handle chunked responses
+                    if (data.shouldContinue && (data.chunkNumber || 1) < 3) { // Limit to 3 chunks max
+                        console.log(`Response truncated, requesting continuation (chunk ${(data.chunkNumber || 1) + 1})`);
+                        
+                        // Add the partial response to conversation history
+                        conversationHistory.push({ role: "assistant", content: data.reply });
+                        
+                        // Display the partial response immediately
+                        displayWizardResponse(data.reply);
+                        
+                        // Request continuation after a short delay
+                        setTimeout(async () => {
+                            try {
+                                const continuationPrompt = "Please continue your previous response from where you left off.";
+                                const continuationResponse = await fetch('/.netlify/functions/deepseek-chat', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ 
+                                        message: continuationPrompt,
+                                        conversationHistory: conversationHistory,
+                                        maxTokens: Math.min(getTokenCount(responseLengthSlider.value) - data.tokensUsed, 800),
+                                        responseMode: getResponseMode(responseLengthSlider.value),
+                                        isChunk: true,
+                                        chunkNumber: (data.chunkNumber || 1) + 1
+                                    }),
+                                });
+                                
+                                if (continuationResponse.ok) {
+                                    const contData = await continuationResponse.json();
+                                    if (contData && contData.reply) {
+                                        // Update the conversation history with the full response
+                                        conversationHistory[conversationHistory.length - 1].content += ' ' + contData.reply;
+                                        
+                                        // Append to the existing response
+                                        appendToWizardResponse(' ' + contData.reply);
+                                        
+                                        // Check if we need another continuation
+                                        if (contData.shouldContinue && contData.chunkNumber < 3) {
+                                            // Recursive continuation logic could go here
+                                        }
+                                    }
+                                }
+                            } catch (contError) {
+                                console.error('Continuation failed:', contError);
+                                appendToWizardResponse(' [... the mystical connection wavered ...]');
+                            }
+                        }, 1000);
+                        
+                    } else {
+                        // Complete response or no continuation needed
+                        conversationHistory.push({ role: "assistant", content: data.reply });
+                        displayWizardResponse(data.reply);
+                    }
                 } else {
                     console.error("Invalid data structure from backend:", data);
                     displayWizardResponse("The wizard's words are jumbled (invalid response format)... perhaps a cosmic hiccup?", true);
