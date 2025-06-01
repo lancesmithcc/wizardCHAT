@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function analyzeVibrationalEnergy(text) {
         const lowerText = text.toLowerCase();
         
-        // Positive keywords
+        // Enhanced positive keywords including greetings and common positive expressions
         const positiveWords = [
             'love', 'peace', 'joy', 'light', 'gratitude', 'blessed', 'amazing', 'beautiful', 
             'wonderful', 'fantastic', 'awesome', 'grateful', 'happy', 'enlightened', 
@@ -104,7 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
             'abundance', 'prosperity', 'harmony', 'unity', 'compassion', 'kindness',
             'hope', 'faith', 'trust', 'believe', 'inspire', 'magic', 'miracle',
             'soul', 'spirit', 'energy', 'vibration', 'frequency', 'consciousness',
-            'meditation', 'zen', 'namaste', 'blessed', 'thank', 'appreciate'
+            'meditation', 'zen', 'namaste', 'blessed', 'thank', 'appreciate',
+            // Common positive/neutral expressions
+            'hello', 'hi', 'hey', 'good', 'great', 'nice', 'cool', 'yes', 'please',
+            'help', 'welcome', 'greetings', 'thanks', 'okay', 'sure', 'absolutely',
+            'perfect', 'excellent', 'brilliant', 'smart', 'wise', 'interesting',
+            'curious', 'excited', 'fun', 'enjoy', 'like', 'love', 'want', 'need',
+            'learn', 'grow', 'improve', 'better', 'best', 'special', 'unique'
         ];
         
         // Negative keywords  
@@ -115,22 +121,46 @@ document.addEventListener('DOMContentLoaded', () => {
             'broken', 'hurt', 'pain', 'suffering', 'misery', 'despair', 'hopeless',
             'worthless', 'useless', 'failure', 'disaster', 'nightmare', 'curse',
             'damn', 'hell', 'devil', 'toxic', 'poison', 'disease', 'death',
-            'destroy', 'kill', 'murder', 'violence', 'war', 'fight', 'attack'
+            'destroy', 'kill', 'murder', 'violence', 'war', 'fight', 'attack',
+            'no', 'never', 'stop', 'quit', 'give up', 'impossible', 'can\'t', 'won\'t'
         ];
         
         let positiveScore = 0;
         let negativeScore = 0;
+        const detectedPositive = [];
+        const detectedNegative = [];
         
         positiveWords.forEach(word => {
-            if (lowerText.includes(word)) positiveScore++;
+            if (lowerText.includes(word)) {
+                positiveScore++;
+                detectedPositive.push(word);
+            }
         });
         
         negativeWords.forEach(word => {
-            if (lowerText.includes(word)) negativeScore++;
+            if (lowerText.includes(word)) {
+                negativeScore++;
+                detectedNegative.push(word);
+            }
         });
         
+        console.log('Vibrational analysis for:', text);
+        console.log('Detected positive words:', detectedPositive);
+        console.log('Detected negative words:', detectedNegative);
+        console.log('Positive score:', positiveScore, 'Negative score:', negativeScore);
+        
+        let vibrationalLevel = positiveScore - negativeScore;
+        
+        // Give neutral messages a slight positive bias (minimum level of 1 if no negative words)
+        if (vibrationalLevel === 0 && negativeScore === 0) {
+            vibrationalLevel = 1;
+            console.log('Applied positive bias to neutral message');
+        }
+        
         // Return vibrational level (-3 to +3)
-        return Math.max(-3, Math.min(3, positiveScore - negativeScore));
+        const finalLevel = Math.max(-3, Math.min(3, vibrationalLevel));
+        console.log('Final vibrational level:', finalLevel);
+        return finalLevel;
     }
 
     // Vibrational color mapping - extremely intense and visible
@@ -202,26 +232,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const vibeColor = getVibrationalColor(vibrationalLevel, messageText);
         
         console.log('Setting vibrational background:', vibrationalLevel, vibeColor);
+        console.log('Current body classes before:', document.body.classList.toString());
         
         // Clear any existing pulsing first
         document.body.classList.remove('vibrational-pulse');
         
         // Set CSS custom property for the vibe color
         document.documentElement.style.setProperty('--vibe-color', vibeColor);
+        console.log('CSS variable --vibe-color set to:', vibeColor);
         
         // Force a reflow to ensure the CSS variable is set
         document.body.offsetHeight;
         
-        // Add pulsing class to body with a small delay
-        setTimeout(() => {
-            document.body.classList.add('vibrational-pulse');
-            console.log('Vibrational pulse class added, color:', vibeColor);
-        }, 50);
+        // Add pulsing class to body immediately for testing
+        document.body.classList.add('vibrational-pulse');
+        console.log('Vibrational pulse class added immediately, color:', vibeColor);
+        console.log('Current body classes after:', document.body.classList.toString());
+        
+        // Log the computed style to verify
+        const computedStyle = window.getComputedStyle(document.body);
+        console.log('Computed background-color:', computedStyle.backgroundColor);
+        console.log('Computed animation:', computedStyle.animation);
         
         // Remove any existing timeout
         if (window.vibrationalTimeout) {
             clearTimeout(window.vibrationalTimeout);
         }
+        
+        // Keep the vibrational background for 15 seconds
+        window.vibrationalTimeout = setTimeout(() => {
+            console.log('Clearing vibrational background after 15 seconds');
+            clearVibrationalBackground();
+        }, 15000);
     }
 
     // Clear vibrational background

@@ -14,16 +14,22 @@ body {
     transition: background-color 13s ease;
 }
 
-/* Dynamic vibrational background pulsing - highly visible */
+/* Dynamic vibrational background pulsing - extremely visible */
 body.vibrational-pulse {
-    animation: vibrational-background-pulse 7s ease-in-out infinite, aurora-bg 20s ease infinite alternate !important;
+    animation: vibrational-background-pulse 3s ease-in-out infinite, aurora-bg 20s ease infinite alternate !important;
 }
 
 @keyframes vibrational-background-pulse {
     0% {
         background-color: #000000 !important;
     }
+    25% {
+        background-color: var(--vibe-color, #000000) !important;
+    }
     50% {
+        background-color: #000000 !important;
+    }
+    75% {
         background-color: var(--vibe-color, #000000) !important;
     }
     100% {
