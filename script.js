@@ -133,16 +133,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(-3, Math.min(3, positiveScore - negativeScore));
     }
 
-    // Vibrational color mapping - more intense and visible
+    // Vibrational color mapping - much more intense and visible
     const vibrationalColors = {
-        // Highly positive (love, spiritual, transcendent) - more intense
-        3: '#4a2555',  // Stronger purple for highest vibration
-        2: '#3f2a55',  // Stronger blue-purple  
-        1: '#2a3055',  // Stronger blue tint
+        // Highly positive (love, spiritual, transcendent) - highly visible
+        3: '#6a3585',  // Much stronger purple for highest vibration
+        2: '#5f3a85',  // Much stronger blue-purple  
+        1: '#3a4085',  // Much stronger blue tint
         0: '#000000',  // Black for neutral
-        '-1': '#553025', // Stronger orange tint
-        '-2': '#552525', // Stronger red tint
-        '-3': '#551515'  // Strong red tint
+        '-1': '#854035', // Much stronger orange tint
+        '-2': '#853535', // Much stronger red tint
+        '-3': '#852525'  // Very strong red tint
     };
 
     // Astrological positions for zodiac symbols (12 positions around a circle)
@@ -165,32 +165,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function getVibrationalColor(vibrationalLevel, messageText) {
         const lowerText = messageText.toLowerCase();
         
-        // Check for specific high-vibe themes - more intense colors
+        // Check for specific high-vibe themes - highly visible colors
         if (lowerText.includes('love') || lowerText.includes('divine') || lowerText.includes('blessed')) {
-            return '#55254a'; // Stronger pink tint
+            return '#85356a'; // Much stronger pink tint
         }
         if (lowerText.includes('spiritual') || lowerText.includes('sacred') || lowerText.includes('enlighten')) {
-            return '#452555'; // Stronger purple tint
+            return '#653585'; // Much stronger purple tint
         }
         if (lowerText.includes('peace') || lowerText.includes('harmony') || lowerText.includes('zen')) {
-            return '#254555'; // Stronger cyan tint
+            return '#356585'; // Much stronger cyan tint
         }
         if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate')) {
-            return '#555525'; // Stronger yellow tint
+            return '#858535'; // Much stronger yellow tint
         }
         if (lowerText.includes('gratitude') || lowerText.includes('thank') || lowerText.includes('appreciate')) {
-            return '#255525'; // Stronger green tint
+            return '#358535'; // Much stronger green tint
         }
         
-        // Check for specific low-vibe themes - more intense colors
+        // Check for specific low-vibe themes - highly visible colors
         if (lowerText.includes('hate') || lowerText.includes('evil') || lowerText.includes('curse')) {
-            return '#551515'; // Stronger dark red
+            return '#852525'; // Much stronger dark red
         }
         if (lowerText.includes('fear') || lowerText.includes('terror') || lowerText.includes('nightmare')) {
-            return '#252525'; // Stronger dark gray
+            return '#454545'; // Much stronger dark gray
         }
         if (lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('furious')) {
-            return '#552020'; // Stronger red tint
+            return '#853030'; // Much stronger red tint
         }
         
         // Default to vibrational level color

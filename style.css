@@ -14,9 +14,9 @@ body {
     transition: background-color 13s ease;
 }
 
-/* Dynamic vibrational background pulsing - subtly perceptible */
+/* Dynamic vibrational background pulsing - highly visible */
 body.vibrational-pulse {
-    animation: vibrational-background-pulse 13s ease-in-out infinite, aurora-bg 20s ease infinite alternate;
+    animation: vibrational-background-pulse 7s ease-in-out infinite, aurora-bg 20s ease infinite alternate;
 }
 
 @keyframes vibrational-background-pulse {
