@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Default to vibrational level color
-        return vibrationalColors[vibrationalLevel.toString()] || '#000000';
+        return vibrationalColors[vibrationalLevel.toString()] || '#4f009d';
     }
 
     // Set background vibe color and start pulsing
@@ -538,8 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let processedText = text;
         
         // Gen Alpha slang pronunciation fixes
-        processedText = processedText.replace(/\bgyatt\b/gi, 'gya-acht');
-        processedText = processedText.replace(/\bgyat\b/gi, 'gya-acht');
+        processedText = processedText.replace(/\bgyatt\b/gi, 'G-YAT');
+        processedText = processedText.replace(/\bgyat\b/gi, 'G-YAT');
         processedText = processedText.replace(/\brizz\b/gi, 'rizz');
         processedText = processedText.replace(/\bskibidi\b/gi, 'skib-uh-dee');
         processedText = processedText.replace(/\bsigma\b/gi, 'sig-mah');
