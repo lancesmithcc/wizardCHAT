@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
 
     try {
         // Parse request body
-        const { message, conversationHistory = [], maxTokens = 300, responseMode = 'moderate', isChunk = false, chunkNumber = 1 } = JSON.parse(event.body || '{}');
+        const { message, conversationHistory = [], maxTokens = 300, responseMode = 'moderate' } = JSON.parse(event.body || '{}');
 
         if (!message?.trim()) {
             return {
@@ -76,115 +76,53 @@ exports.handler = async (event, context) => {
         console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
         const startTime = Date.now();
 
-        // Use conservative token limits for initial chunk to avoid timeouts
-        let actualTokens = maxTokens;
-        if (responseMode === 'profound' && !isChunk) {
-            actualTokens = Math.min(maxTokens, 600); // Start with 600 tokens for profound
-        } else if (responseMode === 'deep' && !isChunk) {
-            actualTokens = Math.min(maxTokens, 500); // Start with 500 tokens for deep
-        }
+        // Use conservative token limits to avoid timeouts
+        const actualTokens = Math.min(maxTokens, 600); // Max 600 tokens to avoid timeouts
         
-        // Shorter timeouts for chunked approach
+        // Simple timeout - 25 seconds
         const controller = new AbortController();
-        let timeoutMs;
-        switch(responseMode) {
-            case 'cryptic': timeoutMs = 25000; break;    // 25s for cryptic
-            case 'moderate': timeoutMs = 30000; break;   // 30s for moderate  
-            case 'deep': timeoutMs = 35000; break;       // 35s for deep
-            case 'profound': timeoutMs = 40000; break;   // 40s for profound
-            default: timeoutMs = 30000;
-        }
-        console.log(`Setting timeout to ${timeoutMs}ms for ${responseMode} mode, tokens: ${actualTokens}`);
+        const timeoutMs = 25000;
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         
-        // Retry logic with exponential backoff
-        let response;
-        let lastError;
-        const maxRetries = 3;
-        
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            const controller = new AbortController();
-            const attemptTimeout = timeoutMs + (attempt - 1) * 15000; // Add 15s per retry
-            const timeoutId = setTimeout(() => controller.abort(), attemptTimeout);
-            
-            try {
-                console.log(`Attempt ${attempt}/${maxRetries} with ${attemptTimeout}ms timeout`);
-                
-                response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'deepseek-chat',
-                        messages: messages,
-                        temperature: 0.85, // Slightly lower for more consistent responses
-                        max_tokens: actualTokens, // Use conservative token limit
-                        stream: false, // Ensure we get complete response
-                        top_p: 0.95, // Add top_p for better quality
-                        frequency_penalty: 0.1, // Slight penalty to reduce repetition
-                        presence_penalty: 0.1 // Encourage variety in responses
-                    }),
-                    signal: controller.signal
-                });
+        console.log(`Making simple request with ${actualTokens} tokens, timeout: ${timeoutMs}ms`);
 
-                clearTimeout(timeoutId);
-                const responseTime = Date.now() - startTime;
-                console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}, attempt: ${attempt}`);
-                
-                // If successful or non-retryable error, break out of retry loop
-                if (response.ok || (response.status < 500 && response.status !== 429)) {
-                    break;
-                }
-                
-                lastError = new Error(`HTTP ${response.status}`);
-                
-            } catch (error) {
-                clearTimeout(timeoutId);
-                lastError = error;
-                console.log(`Attempt ${attempt} failed:`, error.message);
-                
-                // If this is the last attempt, don't wait
-                if (attempt < maxRetries) {
-                    const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
-                    console.log(`Waiting ${waitTime}ms before retry ${attempt + 1}`);
-                    await new Promise(resolve => setTimeout(resolve, waitTime));
-                }
-            }
-        }
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'deepseek-chat',
+                messages: messages,
+                temperature: 0.8,
+                max_tokens: actualTokens
+            }),
+            signal: controller.signal
+        });
 
-        // If all retries failed and we don't have a response, throw the last error
-        if (!response) {
-            throw lastError || new Error('All retry attempts failed');
-        }
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+        console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}`);
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`DeepSeek API error: ${response.status} - ${errorText}`);
             
-            // Return different status codes based on the API error
-            const statusCode = response.status >= 500 ? 502 : response.status;
-            
             return {
-                statusCode: statusCode,
+                statusCode: 502,
                 headers: { 
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
                 body: JSON.stringify({ 
-                    error: response.status === 429 
-                        ? 'The mystical realm is busy. Please wait a moment and try again.'
-                        : response.status >= 500 
-                        ? 'The mystical servers are temporarily overwhelmed. Try again soon!'
-                        : 'A disturbance in the mystical forces occurred. Please try again.'
+                    error: 'The mystical servers are temporarily overwhelmed. Try again soon!'
                 })
             };
         }
 
         const data = await response.json();
         const reply = data.choices?.[0]?.message?.content?.trim();
-        const finishReason = data.choices?.[0]?.finish_reason;
-        const usage = data.usage;
 
         if (!reply) {
             return {
@@ -197,34 +135,18 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Check if response was truncated due to token limit
-        const wasTruncated = finishReason === 'length';
-        const tokensUsed = usage?.completion_tokens || 0;
-        const shouldContinue = wasTruncated && tokensUsed >= (actualTokens * 0.9); // If used 90% of tokens and truncated
-        
-        console.log(`Response: ${tokensUsed} tokens, finish_reason: ${finishReason}, truncated: ${wasTruncated}, should_continue: ${shouldContinue}`);
-
         return {
             statusCode: 200,
             headers: { 
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: JSON.stringify({ 
-                reply,
-                wasTruncated,
-                shouldContinue,
-                tokensUsed,
-                requestedTokens: actualTokens,
-                maxTokens,
-                chunkNumber
-            })
+            body: JSON.stringify({ reply })
         };
 
     } catch (error) {
         console.error('Function error:', error);
         
-        // Handle different types of errors
         let errorMessage = 'A magical mishap occurred';
         let statusCode = 500;
         
