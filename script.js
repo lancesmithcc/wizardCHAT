@@ -974,11 +974,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function getTokenCount(sliderValue) {
         const tokenMap = {
             1: 100,  // Cryptic - mysterious questions
-            2: 200,  // Moderate Wisdom - balanced responses (was 300)
-            3: 400,  // Deep Insights - detailed responses (was 700)
-            4: 600   // Profound - maximum depth (was 1441)
+            2: 300,  // Moderate Wisdom - balanced responses
+            3: 600,  // Deep Insights - detailed responses
+            4: 1000  // Profound - maximum depth (now 1000 tokens)
         };
-        return tokenMap[sliderValue] || 200; // Default to moderate (200)
+        return tokenMap[sliderValue] || 300; // Default to moderate (300)
     }
 
     function getResponseMode(sliderValue) {

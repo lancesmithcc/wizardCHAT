@@ -72,7 +72,10 @@ exports.handler = async (event, context) => {
 
         console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
 
-        // Make API request using fetch instead of axios
+        // Make API request with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -83,19 +86,33 @@ exports.handler = async (event, context) => {
                 model: 'deepseek-chat',
                 messages: messages,
                 temperature: 0.9,
-                max_tokens: Math.min(maxTokens, 1000) // Reduced limit for profound mode
-            })
+                max_tokens: Math.min(maxTokens, 1000) // Allow up to 1000 tokens for profound mode
+            }),
+            signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-            console.error(`DeepSeek API error: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`DeepSeek API error: ${response.status} - ${errorText}`);
+            
+            // Return different status codes based on the API error
+            const statusCode = response.status >= 500 ? 502 : response.status;
+            
             return {
-                statusCode: 502,
+                statusCode: statusCode,
                 headers: { 
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'The mystical servers are temporarily overwhelmed. Try again soon!' })
+                body: JSON.stringify({ 
+                    error: response.status === 429 
+                        ? 'The mystical realm is busy. Please wait a moment and try again.'
+                        : response.status >= 500 
+                        ? 'The mystical servers are temporarily overwhelmed. Try again soon!'
+                        : 'A disturbance in the mystical forces occurred. Please try again.'
+                })
             };
         }
 
@@ -124,13 +141,26 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Function error:', error);
+        
+        // Handle different types of errors
+        let errorMessage = 'A magical mishap occurred';
+        let statusCode = 500;
+        
+        if (error.name === 'AbortError') {
+            errorMessage = 'The mystical connection timed out. Please try again.';
+            statusCode = 504;
+        } else if (error.message?.includes('fetch')) {
+            errorMessage = 'Cannot reach the mystical realm. Please check your connection.';
+            statusCode = 502;
+        }
+        
         return {
-            statusCode: 500,
+            statusCode: statusCode,
             headers: { 
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: JSON.stringify({ error: 'A magical mishap occurred' })
+            body: JSON.stringify({ error: errorMessage })
         };
     }
 };
