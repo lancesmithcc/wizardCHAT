@@ -76,29 +76,79 @@ exports.handler = async (event, context) => {
         console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
         const startTime = Date.now();
 
-        // Make API request with timeout - longer for profound mode
+        // Make API request with timeout - much longer for longer responses
         const controller = new AbortController();
-        const timeoutMs = responseMode === 'profound' ? 45000 : 30000; // 45s for profound, 30s for others
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        let timeoutMs;
+        switch(responseMode) {
+            case 'cryptic': timeoutMs = 30000; break;    // 30s for cryptic
+            case 'moderate': timeoutMs = 45000; break;   // 45s for moderate  
+            case 'deep': timeoutMs = 75000; break;       // 75s for deep
+            case 'profound': timeoutMs = 120000; break;  // 2 minutes for profound
+            default: timeoutMs = 45000;
+        }
+        console.log(`Setting timeout to ${timeoutMs}ms for ${responseMode} mode`);
+        
+        // Retry logic with exponential backoff
+        let response;
+        let lastError;
+        const maxRetries = 3;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            const controller = new AbortController();
+            const attemptTimeout = timeoutMs + (attempt - 1) * 15000; // Add 15s per retry
+            const timeoutId = setTimeout(() => controller.abort(), attemptTimeout);
+            
+            try {
+                console.log(`Attempt ${attempt}/${maxRetries} with ${attemptTimeout}ms timeout`);
+                
+                response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: messages,
+                        temperature: 0.85, // Slightly lower for more consistent responses
+                        max_tokens: Math.min(maxTokens, 2000), // Increased max tokens to 2000
+                        stream: false, // Ensure we get complete response
+                        top_p: 0.95, // Add top_p for better quality
+                        frequency_penalty: 0.1, // Slight penalty to reduce repetition
+                        presence_penalty: 0.1 // Encourage variety in responses
+                    }),
+                    signal: controller.signal
+                });
 
-        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'deepseek-chat',
-                messages: messages,
-                temperature: 0.9,
-                max_tokens: Math.min(maxTokens, 1000) // Allow up to 1000 tokens for profound mode
-            }),
-            signal: controller.signal
-        });
+                clearTimeout(timeoutId);
+                const responseTime = Date.now() - startTime;
+                console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}, attempt: ${attempt}`);
+                
+                // If successful or non-retryable error, break out of retry loop
+                if (response.ok || (response.status < 500 && response.status !== 429)) {
+                    break;
+                }
+                
+                lastError = new Error(`HTTP ${response.status}`);
+                
+            } catch (error) {
+                clearTimeout(timeoutId);
+                lastError = error;
+                console.log(`Attempt ${attempt} failed:`, error.message);
+                
+                // If this is the last attempt, don't wait
+                if (attempt < maxRetries) {
+                    const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
+                    console.log(`Waiting ${waitTime}ms before retry ${attempt + 1}`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                }
+            }
+        }
 
-        clearTimeout(timeoutId);
-        const responseTime = Date.now() - startTime;
-        console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}`);
+        // If all retries failed and we don't have a response, throw the last error
+        if (!response) {
+            throw lastError || new Error('All retry attempts failed');
+        }
 
         if (!response.ok) {
             const errorText = await response.text();

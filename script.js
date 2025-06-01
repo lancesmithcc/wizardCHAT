@@ -168,13 +168,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Vibrational color mapping - extremely intense and visible
     const vibrationalColors = {
         // Highly positive (love, spiritual, transcendent) - extremely visible
-        3: '#aa44bb',  // Very bright purple for highest vibration
-        2: '#8844bb',  // Bright blue-purple  
-        1: '#4466bb',  // Bright blue tint
-        0: '#000000',  // Black for neutral
-        '-1': '#bb6644', // Bright orange tint
-        '-2': '#bb4444', // Bright red tint
-        '-3': '#bb2222'  // Very bright red tint
+        3: '#3d047a',  // Very bright purple for highest vibration
+        2: '#500470',  // Bright blue-purple  
+        1: '#061b59',  // Bright blue tint
+        0: '#333333',  // Black for neutral
+        '-1': '#332411', // Bright orange tint
+        '-2': '#3b1204', // Bright red tint
+        '-3': '#580404'  // Very bright red tint
     };
 
     // Astrological positions for zodiac symbols (12 positions around a circle)
@@ -1033,12 +1033,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Response Length Control
     function getTokenCount(sliderValue) {
         const tokenMap = {
-            1: 100,  // Cryptic - mysterious questions
-            2: 300,  // Moderate Wisdom - balanced responses
-            3: 600,  // Deep Insights - detailed responses
-            4: 1000  // Profound - maximum depth (now 1000 tokens)
+            1: 100,   // Cryptic - mysterious questions
+            2: 400,   // Moderate Wisdom - balanced responses
+            3: 800,   // Deep Insights - detailed responses
+            4: 1500   // Profound - maximum depth (increased to 1500 tokens)
         };
-        return tokenMap[sliderValue] || 300; // Default to moderate (300)
+        return tokenMap[sliderValue] || 400; // Default to moderate (400)
     }
 
     function getResponseMode(sliderValue) {

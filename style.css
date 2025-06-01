@@ -222,13 +222,13 @@ body.vibrational-pulse {
 }
 
 .vibrational-symbol.positive {
-    color: var(--aurora-color1, #4a00e0);
-    text-shadow: 0 0 10px var(--aurora-color1, #4a00e0);
+    color: var(--aurora-color1, #6c40c5);
+    text-shadow: 0 0 10px var(--aurora-color1, #7946e0);
     animation: symbol-appear-positive 2s ease-out forwards, symbol-pulse-positive 3s ease-in-out infinite;
 }
 
 .vibrational-symbol.negative {
-    color: #ff4444;
+    color: #cc3939;
     text-shadow: 0 0 10px #ff4444;
     animation: symbol-appear-negative 2s ease-out forwards, symbol-pulse-negative 3s ease-in-out infinite;
 }
@@ -731,6 +731,7 @@ body.vibrational-pulse {
         width: 95%;
         margin: 10px auto;
         padding: 12px;
+        filter: rotate(2deg);
     }
 }
 
