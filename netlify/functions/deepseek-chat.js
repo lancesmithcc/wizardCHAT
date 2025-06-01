@@ -122,20 +122,60 @@ exports.handler = async (event, context) => {
             };
         }
 
-        console.log("Response OK, parsing JSON...");
-        let data;
-        try {
-            data = await response.json();
-            console.log("JSON parsed successfully");
-        } catch (jsonError) {
-            console.error("JSON parsing failed:", jsonError);
+        console.log("Response OK, checking response size...");
+        
+        // Check response size first
+        const contentLength = response.headers.get('content-length');
+        if (contentLength && parseInt(contentLength) > 50000) { // 50KB limit
+            console.error(`Response too large: ${contentLength} bytes`);
             return {
                 statusCode: 500,
                 headers: { 
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'Failed to parse API response' })
+                body: JSON.stringify({ error: 'Response too large' })
+            };
+        }
+        
+        console.log("Reading response as text first...");
+        let responseText;
+        try {
+            const textPromise = response.text();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Text reading timeout')), 3000)
+            );
+            
+            responseText = await Promise.race([textPromise, timeoutPromise]);
+            console.log(`Response text length: ${responseText.length}`);
+            console.log(`Response text preview: ${responseText.substring(0, 200)}...`);
+        } catch (textError) {
+            console.error("Text reading failed:", textError);
+            return {
+                statusCode: 500,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({ error: 'Failed to read API response' })
+            };
+        }
+        
+        console.log("Parsing text as JSON...");
+        let data;
+        try {
+            data = JSON.parse(responseText);
+            console.log("JSON parsed successfully");
+        } catch (jsonError) {
+            console.error("JSON parsing failed:", jsonError.message);
+            console.log("Raw response that failed to parse:", responseText.substring(0, 500));
+            return {
+                statusCode: 500,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({ error: 'Failed to parse API response as JSON' })
             };
         }
         
