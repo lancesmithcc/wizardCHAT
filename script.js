@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Fade in over 3 seconds
                 const fadeInDuration = 3000; // 3 seconds
-                const targetVolume = 0.3; // 30% final volume
+                const targetVolume = 0.15; // 15% final volume
                 const fadeSteps = 60; // 60 steps for smooth fade
                 const stepDuration = fadeInDuration / fadeSteps;
                 const volumeIncrement = targetVolume / fadeSteps;
