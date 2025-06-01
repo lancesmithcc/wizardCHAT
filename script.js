@@ -671,6 +671,58 @@ document.addEventListener('DOMContentLoaded', () => {
         wizardSpeechBubble.classList.remove('conjuring');
     }
 
+    function displayWizardResponseWithRetry(text, originalMessage) {
+        if (!wizardSpeechBubble) {
+            console.error("Wizard speech bubble element not found!");
+            return;
+        }
+        
+        // Clear conjuring state first
+        clearConjuringState();
+        
+        // Create container for error message and retry button
+        wizardSpeechBubble.innerHTML = '';
+        wizardSpeechBubble.style.animation = 'none';
+        wizardSpeechBubble.style.color = '#ff6b6b';
+        
+        const errorText = document.createElement('div');
+        errorText.textContent = text;
+        errorText.style.marginBottom = '10px';
+        
+        const retryButton = document.createElement('button');
+        retryButton.textContent = 'Try Again';
+        retryButton.style.cssText = `
+            background: linear-gradient(45deg, #8b5cf6, #a855f7);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        `;
+        
+        retryButton.onmouseover = () => {
+            retryButton.style.transform = 'scale(1.05)';
+            retryButton.style.background = 'linear-gradient(45deg, #7c3aed, #9333ea)';
+        };
+        retryButton.onmouseout = () => {
+            retryButton.style.transform = 'scale(1)';
+            retryButton.style.background = 'linear-gradient(45deg, #8b5cf6, #a855f7)';
+        };
+        
+        retryButton.onclick = () => {
+            // Clear the error and retry the message
+            wizardSpeechBubble.innerHTML = '';
+            chatInput.value = originalMessage;
+            sendMessage();
+        };
+        
+        wizardSpeechBubble.appendChild(errorText);
+        wizardSpeechBubble.appendChild(retryButton);
+    }
+
     function displayWizardResponse(text, isError = false) {
         if (!wizardSpeechBubble) {
             console.error("Wizard speech bubble element not found!");
@@ -925,18 +977,26 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Failed to send message or get response:', error);
                 
-                // Fallback wizardly responses for when the mystical servers are down
-                const fallbackResponses = [
-                    "The cosmic WiFi is acting sus right now, young seeker. Try again when Mercury exits retrograde, no cap!",
-                    "Bruh, the mystical servers are literally touching grass rn. Your question slaps though - hit me up again in a hot minute!",
-                    "The divine algorithms are lowkey glitching fr fr. Your query is valid though, bestie. Circle back soon!",
-                    "Not gonna lie, the astral internet is mid right now. Your vibe is immaculate though - retry when the stars align better!",
-                    "The magical bandwidth is straight up bussin elsewhere. Your energy is chef's kiss though - come back when the cosmos chill out!",
-                    "Yo, the ethereal servers said 'nah fam' today. Your question hits different though - slide through again when the digital spirits cooperate!"
-                ];
+                // Check if it's a 502 error (server error)
+                const is502Error = error.message && error.message.includes('502');
                 
-                const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-                displayWizardResponse(randomResponse, true);
+                if (is502Error) {
+                    // Show error message with try again button for 502 errors
+                    displayWizardResponseWithRetry("The mystical servers are overwhelmed by your profound energy. The cosmic forces need a moment to process your request.", messageText);
+                } else {
+                    // Fallback wizardly responses for other errors
+                    const fallbackResponses = [
+                        "The cosmic WiFi is acting sus right now, young seeker. Try again when Mercury exits retrograde, no cap!",
+                        "Bruh, the mystical servers are literally touching grass rn. Your question slaps though - hit me up again in a hot minute!",
+                        "The divine algorithms are lowkey glitching fr fr. Your query is valid though, bestie. Circle back soon!",
+                        "Not gonna lie, the astral internet is mid right now. Your vibe is immaculate though - retry when the stars align better!",
+                        "The magical bandwidth is straight up bussin elsewhere. Your energy is chef's kiss though - come back when the cosmos chill out!",
+                        "Yo, the ethereal servers said 'nah fam' today. Your question hits different though - slide through again when the digital spirits cooperate!"
+                    ];
+                    
+                    const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+                    displayWizardResponse(randomResponse, true);
+                }
             } finally {
                 const speakDuration = wizardSpeechBubble && wizardSpeechBubble.textContent ? wizardSpeechBubble.textContent.length * 50 : 2000;
                 setTimeout(() => toggleWizardSpeaking(false), Math.max(1000, speakDuration));

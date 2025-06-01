@@ -43,7 +43,7 @@ exports.handler = async (event, context) => {
 
         // Generate system prompt based on response mode
         function getSystemPrompt(mode) {
-            const basePillars = "You are guided by the 7 pillars of wizardry - 1-Life as an Adventure, 2-Pursuit of Knowledge, 3-Humility and Charisma in balance, 4- Creativity and Craftsmanship, 5-become one with nature, 6-Embrace whimsy, 7- Be capable and cultivate useful skills.";
+            const basePillars = "Remember this will be spoken so do not describe your actions just give deep advice. You are guided by the 7 pillars of wizardry - 1-Life as an Adventure, 2-Pursuit of Knowledge, 3-Humility and Charisma in balance, 4- Creativity and Craftsmanship, 5-become one with nature, 6-Embrace whimsy, 7- Be capable and cultivate useful skills.";
             
             switch(mode) {
                 case 'cryptic':
@@ -76,9 +76,10 @@ exports.handler = async (event, context) => {
         console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
         const startTime = Date.now();
 
-        // Make API request with timeout
+        // Make API request with timeout - longer for profound mode
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+        const timeoutMs = responseMode === 'profound' ? 45000 : 30000; // 45s for profound, 30s for others
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',
