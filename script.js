@@ -133,16 +133,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(-3, Math.min(3, positiveScore - negativeScore));
     }
 
-    // Vibrational color mapping - much more intense and visible
+    // Vibrational color mapping - extremely intense and visible
     const vibrationalColors = {
-        // Highly positive (love, spiritual, transcendent) - highly visible
-        3: '#6a3585',  // Much stronger purple for highest vibration
-        2: '#5f3a85',  // Much stronger blue-purple  
-        1: '#3a4085',  // Much stronger blue tint
+        // Highly positive (love, spiritual, transcendent) - extremely visible
+        3: '#aa44bb',  // Very bright purple for highest vibration
+        2: '#8844bb',  // Bright blue-purple  
+        1: '#4466bb',  // Bright blue tint
         0: '#000000',  // Black for neutral
-        '-1': '#854035', // Much stronger orange tint
-        '-2': '#853535', // Much stronger red tint
-        '-3': '#852525'  // Very strong red tint
+        '-1': '#bb6644', // Bright orange tint
+        '-2': '#bb4444', // Bright red tint
+        '-3': '#bb2222'  // Very bright red tint
     };
 
     // Astrological positions for zodiac symbols (12 positions around a circle)
@@ -165,32 +165,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function getVibrationalColor(vibrationalLevel, messageText) {
         const lowerText = messageText.toLowerCase();
         
-        // Check for specific high-vibe themes - highly visible colors
+        // Check for specific high-vibe themes - extremely visible colors
         if (lowerText.includes('love') || lowerText.includes('divine') || lowerText.includes('blessed')) {
-            return '#85356a'; // Much stronger pink tint
+            return '#cc44aa'; // Very bright pink tint
         }
         if (lowerText.includes('spiritual') || lowerText.includes('sacred') || lowerText.includes('enlighten')) {
-            return '#653585'; // Much stronger purple tint
+            return '#8844cc'; // Very bright purple tint
         }
         if (lowerText.includes('peace') || lowerText.includes('harmony') || lowerText.includes('zen')) {
-            return '#356585'; // Much stronger cyan tint
+            return '#44aacc'; // Very bright cyan tint
         }
         if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate')) {
-            return '#858535'; // Much stronger yellow tint
+            return '#ccaa44'; // Very bright yellow tint
         }
         if (lowerText.includes('gratitude') || lowerText.includes('thank') || lowerText.includes('appreciate')) {
-            return '#358535'; // Much stronger green tint
+            return '#44cc44'; // Very bright green tint
         }
         
-        // Check for specific low-vibe themes - highly visible colors
+        // Check for specific low-vibe themes - extremely visible colors
         if (lowerText.includes('hate') || lowerText.includes('evil') || lowerText.includes('curse')) {
-            return '#852525'; // Much stronger dark red
+            return '#cc2222'; // Very bright dark red
         }
         if (lowerText.includes('fear') || lowerText.includes('terror') || lowerText.includes('nightmare')) {
-            return '#454545'; // Much stronger dark gray
+            return '#666666'; // Brighter dark gray
         }
         if (lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('furious')) {
-            return '#853030'; // Much stronger red tint
+            return '#cc4444'; // Very bright red tint
         }
         
         // Default to vibrational level color
@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Clear any existing content and add conjuring class
-        wizardSpeechBubble.textContent = 'Conjuring...';
+        wizardSpeechBubble.textContent = ''; // Empty since CSS pseudo-element shows "Conjuring..."
         wizardSpeechBubble.classList.add('conjuring');
         wizardSpeechBubble.style.animation = '';
         wizardSpeechBubble.style.color = '';
