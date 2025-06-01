@@ -112,6 +112,15 @@
             <textarea id="chat-input" placeholder="Speak or type thy query..."></textarea>
             <button id="send-button">✨</button>
         </div>
+        <div class="response-length-control">
+            <label for="response-length-slider" class="response-length-label">Mystical Depth:</label>
+            <div class="slider-container">
+                <span class="slider-label">Cryptic</span>
+                <input type="range" id="response-length-slider" min="1" max="4" value="2" step="1" class="mystical-slider">
+                <span class="slider-label">Profound</span>
+            </div>
+            <div class="length-indicator" id="length-indicator">Moderate Wisdom</div>
+        </div>
         <div class="chat-log" id="user-chat-log">
             <!-- Chat messages will appear here -->
         </div>

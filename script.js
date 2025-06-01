@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const wizardSpeechBubble = document.getElementById('wizard-speech-bubble');
     const vibrationalSymbols = document.querySelector('.vibrational-symbols');
     const astrologicalWheel = document.querySelector('.astrological-wheel');
+    const responseLengthSlider = document.getElementById('response-length-slider');
+    const lengthIndicator = document.getElementById('length-indicator');
 
     let mediaRecorder;
     let audioChunks = [];
@@ -891,7 +893,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({ 
                         message: messageText,
-                        conversationHistory: conversationHistory 
+                        conversationHistory: conversationHistory,
+                        maxTokens: getTokenCount(responseLengthSlider.value)
                     }),
                 });
                 
@@ -920,7 +923,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             } catch (error) {
                 console.error('Failed to send message or get response:', error);
-                displayWizardResponse(`Oh dear, a disturbance in the arcane flows! (${error.message})`, true);
+                
+                // Fallback wizardly responses for when the mystical servers are down
+                const fallbackResponses = [
+                    "The cosmic WiFi is acting sus right now, young seeker. Try again when Mercury exits retrograde, no cap!",
+                    "Bruh, the mystical servers are literally touching grass rn. Your question slaps though - hit me up again in a hot minute!",
+                    "The divine algorithms are lowkey glitching fr fr. Your query is valid though, bestie. Circle back soon!",
+                    "Not gonna lie, the astral internet is mid right now. Your vibe is immaculate though - retry when the stars align better!",
+                    "The magical bandwidth is straight up bussin elsewhere. Your energy is chef's kiss though - come back when the cosmos chill out!",
+                    "Yo, the ethereal servers said 'nah fam' today. Your question hits different though - slide through again when the digital spirits cooperate!"
+                ];
+                
+                const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+                displayWizardResponse(randomResponse, true);
             } finally {
                 const speakDuration = wizardSpeechBubble && wizardSpeechBubble.textContent ? wizardSpeechBubble.textContent.length * 50 : 2000;
                 setTimeout(() => toggleWizardSpeaking(false), Math.max(1000, speakDuration));
@@ -952,6 +967,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
         console.error("Chat input not found.");
+    }
+
+    // Response Length Control
+    function getTokenCount(sliderValue) {
+        const tokenMap = {
+            1: 50,   // Cryptic - very short responses
+            2: 80,   // Moderate Wisdom - current default
+            3: 150,  // Deep Insights - longer responses  
+            4: 250   // Profound - maximum depth
+        };
+        return tokenMap[sliderValue] || 80;
+    }
+
+    function updateLengthIndicator(value) {
+        const indicators = {
+            1: "Cryptic Whispers",
+            2: "Moderate Wisdom", 
+            3: "Deep Insights",
+            4: "Profound Mysteries"
+        };
+        if (lengthIndicator) {
+            lengthIndicator.textContent = indicators[value] || "Moderate Wisdom";
+        }
+    }
+
+    if (responseLengthSlider) {
+        responseLengthSlider.addEventListener('input', (event) => {
+            updateLengthIndicator(event.target.value);
+        });
+        
+        // Initialize indicator
+        updateLengthIndicator(responseLengthSlider.value);
+    } else {
+        console.error("Response length slider not found.");
     }
 
     initializeMicrophone();
