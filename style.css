@@ -16,7 +16,7 @@ body {
 
 /* Dynamic vibrational background pulsing - extremely visible */
 body.vibrational-pulse {
-    animation: vibrational-background-pulse 3s ease-in-out infinite, aurora-bg 20s ease infinite alternate !important;
+    animation: vibrational-background-pulse 14s ease-in-out infinite, aurora-bg 20s ease infinite alternate !important;
 }
 
 @keyframes vibrational-background-pulse {
@@ -611,7 +611,7 @@ body.vibrational-pulse {
     line-height: 1.4;
     box-shadow: 0 0 10px var(--aurora-color3);
     transform: rotate(2deg);
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
     color:#999 !important;
 }
 
@@ -639,7 +639,7 @@ body.vibrational-pulse {
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    animation: gradient-shine 2s ease-in-out infinite;
+    animation: gradient-shine 5s ease-in-out infinite;
     font-style: italic;
 }
 
