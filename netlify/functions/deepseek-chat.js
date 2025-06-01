@@ -28,6 +28,7 @@ exports.handler = async (event, context) => {
 
         const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
         if (!DEEPSEEK_API_KEY) {
+            console.error('DEEPSEEK_API_KEY environment variable not found');
             return {
                 statusCode: 500,
                 headers: { 
@@ -37,6 +38,8 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: 'API key not configured' })
             };
         }
+        
+        console.log(`API key present: ${DEEPSEEK_API_KEY.substring(0, 8)}...`);
 
         // Generate system prompt based on response mode
         function getSystemPrompt(mode) {
@@ -71,6 +74,7 @@ exports.handler = async (event, context) => {
         ];
 
         console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
+        const startTime = Date.now();
 
         // Make API request with timeout
         const controller = new AbortController();
@@ -92,6 +96,8 @@ exports.handler = async (event, context) => {
         });
 
         clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+        console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}`);
 
         if (!response.ok) {
             const errorText = await response.text();
