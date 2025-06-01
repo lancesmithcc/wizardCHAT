@@ -83,7 +83,7 @@ exports.handler = async (event, context) => {
                 model: 'deepseek-chat',
                 messages: messages,
                 temperature: 0.9,
-                max_tokens: Math.min(maxTokens, 1500) // Increased limit for profound mode
+                max_tokens: Math.min(maxTokens, 1000) // Reduced limit for profound mode
             })
         });
 
