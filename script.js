@@ -1066,11 +1066,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function getTokenCount(sliderValue) {
         const tokenMap = {
             1: 100,   // Cryptic - mysterious questions
-            2: 200,   // Moderate Wisdom - balanced responses
-            3: 350,   // Deep Insights - detailed responses
-            4: 500    // Profound - maximum depth (conservative limit)
+            2: 150,   // Moderate Wisdom - balanced responses
+            3: 250,   // Deep Insights - detailed responses
+            4: 350    // Profound - maximum depth (very conservative)
         };
-        return tokenMap[sliderValue] || 200; // Default to moderate (200)
+        return tokenMap[sliderValue] || 150; // Default to moderate (150)
     }
 
     function getResponseMode(sliderValue) {

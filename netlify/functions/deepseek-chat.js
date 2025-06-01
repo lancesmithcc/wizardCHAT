@@ -76,8 +76,8 @@ exports.handler = async (event, context) => {
         console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
         const startTime = Date.now();
 
-        // Use conservative token limits to avoid timeouts
-        const actualTokens = Math.min(maxTokens, 600); // Max 600 tokens to avoid timeouts
+        // Use very conservative token limits to avoid timeouts
+        const actualTokens = Math.min(maxTokens, 400); // Max 400 tokens to avoid any issues
         
         // Simple timeout - 25 seconds
         const controller = new AbortController();
@@ -106,6 +106,7 @@ exports.handler = async (event, context) => {
         console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}`);
 
         if (!response.ok) {
+            console.log("Response not OK, reading error text...");
             const errorText = await response.text();
             console.error(`DeepSeek API error: ${response.status} - ${errorText}`);
             
@@ -121,10 +122,29 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const data = await response.json();
+        console.log("Response OK, parsing JSON...");
+        let data;
+        try {
+            data = await response.json();
+            console.log("JSON parsed successfully");
+        } catch (jsonError) {
+            console.error("JSON parsing failed:", jsonError);
+            return {
+                statusCode: 500,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({ error: 'Failed to parse API response' })
+            };
+        }
+        
+        console.log("Extracting reply...");
         const reply = data.choices?.[0]?.message?.content?.trim();
+        console.log(`Reply extracted, length: ${reply?.length || 0}`);
 
         if (!reply) {
+            console.log("No reply found, returning error");
             return {
                 statusCode: 500,
                 headers: { 
@@ -135,6 +155,7 @@ exports.handler = async (event, context) => {
             };
         }
 
+        console.log("Returning successful response...");
         return {
             statusCode: 200,
             headers: { 
