@@ -201,11 +201,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function setVibrationalBackground(vibrationalLevel, messageText) {
         const vibeColor = getVibrationalColor(vibrationalLevel, messageText);
         
+        console.log('Setting vibrational background:', vibrationalLevel, vibeColor);
+        
+        // Clear any existing pulsing first
+        document.body.classList.remove('vibrational-pulse');
+        
         // Set CSS custom property for the vibe color
         document.documentElement.style.setProperty('--vibe-color', vibeColor);
         
-        // Add pulsing class to body
-        document.body.classList.add('vibrational-pulse');
+        // Force a reflow to ensure the CSS variable is set
+        document.body.offsetHeight;
+        
+        // Add pulsing class to body with a small delay
+        setTimeout(() => {
+            document.body.classList.add('vibrational-pulse');
+            console.log('Vibrational pulse class added, color:', vibeColor);
+        }, 50);
         
         // Remove any existing timeout
         if (window.vibrationalTimeout) {
@@ -579,14 +590,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        wizardSpeechBubble.textContent = text;
         if (isError) {
+            wizardSpeechBubble.textContent = text;
             wizardSpeechBubble.style.animation = 'none';
             wizardSpeechBubble.style.color = '#ff6b6b';
         } else {
+            // Clear bubble and start typing effect
+            wizardSpeechBubble.textContent = '';
             wizardSpeechBubble.style.animation = '';
             wizardSpeechBubble.style.color = '';
-            speakWizardResponse(text);
+            
+            // Typing effect
+            let charIndex = 0;
+            const typingSpeed = 30; // milliseconds between characters
+            
+            const typeInterval = setInterval(() => {
+                if (charIndex < text.length) {
+                    wizardSpeechBubble.textContent += text.charAt(charIndex);
+                    charIndex++;
+                } else {
+                    clearInterval(typeInterval);
+                    // Start TTS after typing is complete
+                    speakWizardResponse(text);
+                }
+            }, typingSpeed);
         }
     }
 
