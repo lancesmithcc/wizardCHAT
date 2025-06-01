@@ -658,6 +658,25 @@ body.vibrational-pulse {
     }
 }
 
+/* Additional conjuring text styles for longer responses */
+.conjuring-text {
+    color: var(--aurora-color2) !important;
+    font-style: italic;
+    font-size: 1em;
+    margin-bottom: 5px;
+    text-shadow: 0 0 8px var(--aurora-color2);
+    animation: aurora-text-wizard-response 10s ease infinite alternate;
+}
+
+.conjuring-subtext {
+    color: var(--aurora-color3) !important;
+    font-style: italic;
+    font-size: 0.8em;
+    opacity: 0.8;
+    text-shadow: 0 0 5px var(--aurora-color3);
+    animation: aurora-text-user 8s ease infinite alternate;
+}
+
 /* Heartbeat animation for speech bubble when wizard is speaking */
 #wizard-ascii.speaking + .wizard-speech {
     animation: aurora-text-wizard-response 33s ease infinite alternate, speech-bubble-heartbeat 5s infinite;

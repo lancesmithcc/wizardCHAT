@@ -658,11 +658,35 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Clear any existing timeouts
+        if (window.conjuringTimeout1) clearTimeout(window.conjuringTimeout1);
+        if (window.conjuringTimeout2) clearTimeout(window.conjuringTimeout2);
+        
         // Clear any existing content and add conjuring class
         wizardSpeechBubble.textContent = ''; // Empty since CSS pseudo-element shows "Conjuring..."
         wizardSpeechBubble.classList.add('conjuring');
         wizardSpeechBubble.style.animation = '';
         wizardSpeechBubble.style.color = '';
+        
+        // Show additional info for longer responses
+        const tokenCount = getTokenCount(responseLengthSlider.value);
+        const responseMode = getResponseMode(responseLengthSlider.value);
+        
+        if (tokenCount > 1000) {
+            // Add extra text for epic/legendary responses
+            window.conjuringTimeout1 = setTimeout(() => {
+                if (wizardSpeechBubble.classList.contains('conjuring')) {
+                    const modeText = responseMode === 'legendary' ? 'legendary cosmic wisdom' : responseMode === 'epic' ? 'epic mystical knowledge' : 'profound insights';
+                    wizardSpeechBubble.innerHTML = `<div class="conjuring-text">Channeling ${modeText}...</div><div class="conjuring-subtext">The universe is working hard on your profound question</div>`;
+                }
+            }, 3000); // Show after 3 seconds
+            
+            window.conjuringTimeout2 = setTimeout(() => {
+                if (wizardSpeechBubble.classList.contains('conjuring')) {
+                    wizardSpeechBubble.innerHTML = `<div class="conjuring-text">Almost there...</div><div class="conjuring-subtext">Your cosmic response is manifesting</div>`;
+                }
+            }, 15000); // Show after 15 seconds
+        }
     }
 
     function clearConjuringState() {
@@ -970,6 +994,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     conversationHistory = conversationHistory.slice(-10);
                 }
                 
+                const tokenCount = getTokenCount(responseLengthSlider.value);
+                const responseMode = getResponseMode(responseLengthSlider.value);
+                
+                console.log(`Requesting ${tokenCount} tokens in ${responseMode} mode`);
+                
+                // Extended timeout for longer responses
+                const timeoutMs = tokenCount > 1000 ? 180000 : tokenCount > 500 ? 120000 : 90000;
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                }, timeoutMs);
+                
                 const response = await fetch('/.netlify/functions/deepseek-chat', {
                     method: 'POST',
                     headers: {
@@ -978,10 +1015,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ 
                         message: messageText,
                         conversationHistory: conversationHistory,
-                        maxTokens: getTokenCount(responseLengthSlider.value),
-                        responseMode: getResponseMode(responseLengthSlider.value)
+                        maxTokens: tokenCount,
+                        responseMode: responseMode
                     }),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 if (!response.ok) {
                     let errorData = { error: `Error from the mystic ether: ${response.status}` };
@@ -1000,6 +1040,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data && data.reply) {
                     // Add wizard's response to conversation history
                     conversationHistory.push({ role: "assistant", content: data.reply });
+                    
+                    // Log token usage if available
+                    if (data.tokenUsage) {
+                        console.log(`Token usage - Prompt: ${data.tokenUsage.prompt_tokens}, Completion: ${data.tokenUsage.completion_tokens}, Total: ${data.tokenUsage.total_tokens}`);
+                    }
+                    if (data.responseTime) {
+                        console.log(`Response time: ${data.responseTime}ms`);
+                    }
+                    
                     displayWizardResponse(data.reply);
                 } else {
                     console.error("Invalid data structure from backend:", data);
@@ -1009,10 +1058,19 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Failed to send message or get response:', error);
                 
-                // Check if it's a 502 error (server error)
+                // Check for specific error types
+                const isAbortError = error.name === 'AbortError';
                 const is502Error = error.message && error.message.includes('502');
+                const isTimeoutError = error.message && (error.message.includes('timeout') || error.message.includes('time'));
                 
-                if (is502Error) {
+                if (isAbortError || isTimeoutError) {
+                    // Handle timeout errors with retry option
+                    const tokenCount = getTokenCount(responseLengthSlider.value);
+                    const timeoutMessage = tokenCount > 1000 
+                        ? "Your question awakened such profound cosmic wisdom that the universe itself needed extra time to process it! The mystical forces are working hard to deliver your legendary response."
+                        : "The mystical servers are taking their sweet time channeling the cosmic energies for your profound question.";
+                    displayWizardResponseWithRetry(timeoutMessage, messageText);
+                } else if (is502Error) {
                     // Show error message with try again button for 502 errors
                     displayWizardResponseWithRetry("The mystical servers are overwhelmed by your profound energy. The cosmic forces need a moment to process your request.", messageText);
                 } else {
@@ -1062,15 +1120,17 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Chat input not found.");
     }
 
-    // Response Length Control
+    // Response Length Control - Extended for longer responses
     function getTokenCount(sliderValue) {
         const tokenMap = {
             1: 100,   // Cryptic - mysterious questions
-            2: 150,   // Moderate Wisdom - balanced responses
-            3: 250,   // Deep Insights - detailed responses
-            4: 350    // Profound - maximum depth (very conservative)
+            2: 200,   // Moderate Wisdom - balanced responses  
+            3: 400,   // Deep Insights - detailed responses
+            4: 700,   // Profound - comprehensive wisdom
+            5: 1100,  // Epic - extensive mystical knowledge
+            6: 1500   // Legendary - maximum cosmic wisdom (1441+ tokens)
         };
-        return tokenMap[sliderValue] || 150; // Default to moderate (150)
+        return tokenMap[sliderValue] || 200; // Default to moderate (200)
     }
 
     function getResponseMode(sliderValue) {
@@ -1078,7 +1138,9 @@ document.addEventListener('DOMContentLoaded', () => {
             1: "cryptic",      // Just ask mysterious questions
             2: "moderate",     // Balanced wisdom
             3: "deep",         // Detailed insights
-            4: "profound"      // Maximum depth and analysis
+            4: "profound",     // Maximum depth and analysis
+            5: "epic",         // Extensive mystical exploration
+            6: "legendary"     // Ultimate cosmic wisdom
         };
         return modes[sliderValue] || "moderate";
     }
@@ -1088,7 +1150,9 @@ document.addEventListener('DOMContentLoaded', () => {
             1: "Cryptic Questions",
             2: "Moderate Wisdom", 
             3: "Deep Insights",
-            4: "Profound Mysteries"
+            4: "Profound Mysteries",
+            5: "Epic Wisdom",
+            6: "Legendary Cosmic Knowledge"
         };
         if (lengthIndicator) {
             lengthIndicator.textContent = indicators[value] || "Moderate Wisdom";
