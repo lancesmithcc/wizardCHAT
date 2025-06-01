@@ -447,62 +447,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Apply effects to audio element
+    // Apply effects to audio element (disabled due to CORS restrictions)
     function applyWizardEffects(audioElement) {
-        if (!audioContext || !wizardAudioEffects || !audioElement) return audioElement;
-        
-        try {
-            // Resume audio context if suspended
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            
-            // Create media element source (only once per audio element)
-            if (!audioElement._webAudioSource) {
-                const source = audioContext.createMediaElementSource(audioElement);
-                audioElement._webAudioSource = source;
-                
-                // Create a simplified effects chain
-                const gainNode = audioContext.createGain();
-                const filterNode = audioContext.createBiquadFilter();
-                const distortionNode = audioContext.createWaveShaper();
-                
-                // Setup filter for robotic character
-                filterNode.type = 'lowpass';
-                filterNode.frequency.setValueAtTime(2500, audioContext.currentTime);
-                filterNode.Q.setValueAtTime(2, audioContext.currentTime);
-                
-                // Setup subtle distortion
-                const makeDistortionCurve = (amount) => {
-                    const samples = 44100;
-                    const curve = new Float32Array(samples);
-                    for (let i = 0; i < samples; i++) {
-                        const x = (i * 2) / samples - 1;
-                        curve[i] = Math.tanh(x * amount);
-                    }
-                    return curve;
-                };
-                distortionNode.curve = makeDistortionCurve(3);
-                distortionNode.oversample = '2x';
-                
-                // Setup gain
-                gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-                
-                // Connect the simplified chain
-                source
-                    .connect(gainNode)
-                    .connect(filterNode)
-                    .connect(distortionNode)
-                    .connect(audioContext.destination);
-                
-                console.log("Simplified wizard audio effects applied");
-            }
-        } catch (error) {
-            console.error("Error applying wizard effects:", error);
-            // If Web Audio fails, return the original audio element
-            return audioElement;
-        }
-        
+        // Web Audio API effects are disabled because external TTS audio files
+        // from fal.media don't support CORS for Web Audio processing
+        // This would require proxy/server-side audio processing to work properly
+        console.log("Web Audio effects disabled due to CORS restrictions on external audio files");
         return audioElement;
     }
 
@@ -577,12 +527,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     audio.onloadstart = () => console.log('Audio loading started');
                     audio.oncanplay = () => {
                         console.log('Audio can start playing');
-                        // Apply wizard effects after audio is ready to play
-                        try {
-                            applyWizardEffects(audio);
-                        } catch (effectError) {
-                            console.warn('Effects failed, playing without effects:', effectError);
-                        }
+                        // Skip Web Audio effects due to CORS restrictions with external audio files
+                        // The external TTS audio files don't allow cross-origin Web Audio processing
+                        console.log('Skipping Web Audio effects due to CORS restrictions on external audio');
                     };
                     audio.onplay = () => console.log('Audio playback started');
                     audio.onended = () => console.log('Audio playback ended');
