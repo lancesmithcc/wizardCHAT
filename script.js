@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Setup ring modulation
             wizardAudioEffects.ringModOsc.frequency.setValueAtTime(30, audioContext.currentTime); // Low frequency for robotic buzz
             wizardAudioEffects.ringModOsc.start();
-            wizardAudioEffects.ringModGain.gain.setValueAtTime(0.3, audioContext.currentTime); // Subtle ring mod
+            wizardAudioEffects.ringModGain.gain.setValueAtTime(0.2, audioContext.currentTime); // Subtle ring mod
             
             // Setup filters
             wizardAudioEffects.lowpassFilter.type = 'lowpass';
