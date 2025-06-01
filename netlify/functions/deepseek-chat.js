@@ -8,12 +8,30 @@ exports.handler = async (event, context) => {
         };
     }
 
-    const { message, conversationHistory = [] } = JSON.parse(event.body);
-
-    if (!message) {
+    let parsedBody;
+    try {
+        parsedBody = JSON.parse(event.body);
+    } catch (parseError) {
+        console.error('Invalid JSON in request body:', parseError.message);
         return {
             statusCode: 400,
-            body: JSON.stringify({ error: 'Message is required' })
+            body: JSON.stringify({ error: 'Invalid JSON in request body' })
+        };
+    }
+
+    const { message, conversationHistory = [] } = parsedBody;
+
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Message is required and must be a non-empty string' })
+        };
+    }
+
+    if (!Array.isArray(conversationHistory)) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Conversation history must be an array' })
         };
     }
 
@@ -47,7 +65,8 @@ exports.handler = async (event, context) => {
             headers: {
                 'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: 25000 // 25 second timeout to prevent Netlify function timeout
         });
 
         if (response.data && response.data.choices && response.data.choices.length > 0 && response.data.choices[0].message) {
@@ -82,13 +101,20 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: `The astral plane reports an anomaly: ${error.response.data.error ? error.response.data.error.message : error.message}` })
             };
         } else if (error.request) {
-            console.error('Request:', error.request);
+            console.error('Request error - no response received:', error.code);
             return {
                 statusCode: 503,
                 body: JSON.stringify({ error: 'The carrier pigeons seem to have lost their way (No response from DeepSeek)' })
             };
+        } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            console.error('Request timeout:', error.message);
+            return {
+                statusCode: 504,
+                body: JSON.stringify({ error: 'The mystical energies are flowing slowly today (Request timeout)' })
+            };
         } else {
             console.error('Error message:', error.message);
+            console.error('Error code:', error.code);
             return {
                 statusCode: 500,
                 body: JSON.stringify({ error: 'A magical mishap occurred before the spell could be cast (DeepSeek request setup failed)' })
