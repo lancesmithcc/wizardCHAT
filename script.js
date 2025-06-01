@@ -533,15 +533,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Preprocess text for better TTS pronunciation
+    function preprocessTextForTTS(text) {
+        let processedText = text;
+        
+        // Gen Alpha slang pronunciation fixes
+        processedText = processedText.replace(/\bgyatt\b/gi, 'gee-ot');
+        processedText = processedText.replace(/\bgyat\b/gi, 'gee-ot');
+        processedText = processedText.replace(/\brizz\b/gi, 'rizz');
+        processedText = processedText.replace(/\bskibidi\b/gi, 'skib-ih-dee');
+        processedText = processedText.replace(/\bsigma\b/gi, 'sig-mah');
+        processedText = processedText.replace(/\bbeta\b/gi, 'bay-tah');
+        processedText = processedText.replace(/\balpha\b/gi, 'al-fah');
+        processedText = processedText.replace(/\bfr\b/gi, 'for real');
+        processedText = processedText.replace(/\bngl\b/gi, 'not gonna lie');
+        processedText = processedText.replace(/\bfam\b/gi, 'fam');
+        processedText = processedText.replace(/\bno cap\b/gi, 'no cap');
+        processedText = processedText.replace(/\bfacts\b/gi, 'facts');
+        
+        console.log('Original text:', text);
+        console.log('Processed text for TTS:', processedText);
+        
+        return processedText;
+    }
+
     async function speakWizardResponse(text) {
         try {
-            console.log('Requesting TTS for text:', text);
+            const processedText = preprocessTextForTTS(text);
+            console.log('Requesting TTS for text:', processedText);
             const response = await fetch('/.netlify/functions/fal-kokoro-tts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ text: text }),
+                body: JSON.stringify({ text: processedText }),
             });
 
             console.log('TTS response status:', response.status);
