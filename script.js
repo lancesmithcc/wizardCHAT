@@ -541,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
         processedText = processedText.replace(/\bgyatt\b/gi, 'gyacht');
         processedText = processedText.replace(/\bgyat\b/gi, 'gyacht');
         processedText = processedText.replace(/\brizz\b/gi, 'rizz');
-        processedText = processedText.replace(/\bskibidi\b/gi, 'skib-ih-dee');
+        processedText = processedText.replace(/\bskibidi\b/gi, 'skib-uh-dee');
         processedText = processedText.replace(/\bsigma\b/gi, 'sig-mah');
         processedText = processedText.replace(/\bbeta\b/gi, 'bay-tah');
         processedText = processedText.replace(/\balpha\b/gi, 'al-fah');
@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
         processedText = processedText.replace(/\bngl\b/gi, 'not gonna lie');
         processedText = processedText.replace(/\bfam\b/gi, 'fam');
         processedText = processedText.replace(/\bno cap\b/gi, 'no cap');
-        processedText = processedText.replace(/\bfacts\b/gi, 'facts');
+        processedText = processedText.replace(/\bfacts\b/gi, 'facts'); 
         
         console.log('Original text:', text);
         console.log('Processed text for TTS:', processedText);
