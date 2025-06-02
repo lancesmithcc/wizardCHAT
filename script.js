@@ -1365,12 +1365,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Response Length Control - Adjusted for Netlify function reliability
     function getTokenCount(sliderValue) {
         const tokenMap = {
-            1: 100,   // Cryptic - mysterious questions (very reliable)
-            2: 200,   // Moderate Wisdom - balanced responses (very reliable)
-            3: 350,   // Deep Insights - detailed responses (reliable) 
-            4: 500,   // Profound - comprehensive wisdom (may timeout)
-            5: 700,   // Epic - extensive mystical knowledge (often timeouts)
-            6: 900    // Legendary - maximum cosmic wisdom (frequently timeouts)
+            1: 100,   // Cryptic - mysterious questions 
+            2: 200,   // Moderate Wisdom - balanced responses 
+            3: 350,   // Deep Insights - detailed responses
+            4: 500,   // Profound - comprehensive wisdom 
+            5: 700,   // Epic - extensive mystical knowledge
+            6: 900    // Legendary - maximum cosmic wisdom
         };
         return tokenMap[sliderValue] || 200; // Default to moderate (200)
     }
@@ -1389,12 +1389,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateLengthIndicator(value) {
         const indicators = {
-            1: "Cryptic Questions ⚡ (Most Reliable)",
-            2: "Moderate Wisdom ⚡ (Most Reliable)", 
-            3: "Deep Insights ⚡ (Reliable)",
-            4: "Profound Mysteries ⚠️ (May timeout)",
-            5: "Epic Wisdom ⚠️ (Often timeouts)",
-            6: "Legendary Cosmic Knowledge ⚠️ (Frequently timeouts)"
+            1: "Cryptic Questions",
+            2: "Moderate Wisdom", 
+            3: "Deep Insights",
+            4: "Profound Mysteries",
+            5: "Epic Wisdom",
+            6: "Legendary Cosmic Knowledge"
         };
         if (lengthIndicator) {
             lengthIndicator.textContent = indicators[value] || "Moderate Wisdom";
