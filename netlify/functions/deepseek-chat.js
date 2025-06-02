@@ -1,17 +1,20 @@
 exports.handler = async (event, context) => {
-    // Check for streaming support
-    const isStreamingRequest = event.headers['accept'] && event.headers['accept'].includes('text/stream');
+    // Extended timeout for Netlify functions
+    context.callbackWaitsForEmptyEventLoop = false;
     
-    // Simple CORS and method check
+    // Set headers for CORS
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Accept',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+    };
+    
+    // Handle OPTIONS request for CORS
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 200,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type, Accept',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
-            },
+            headers,
             body: ''
         };
     }
@@ -19,10 +22,7 @@ exports.handler = async (event, context) => {
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+            headers,
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
@@ -39,10 +39,7 @@ exports.handler = async (event, context) => {
         if (!message?.trim()) {
             return {
                 statusCode: 400,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                headers,
                 body: JSON.stringify({ error: 'Message is required' })
             };
         }
@@ -52,10 +49,7 @@ exports.handler = async (event, context) => {
             console.error('DEEPSEEK_API_KEY environment variable not found');
             return {
                 statusCode: 500,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                headers,
                 body: JSON.stringify({ error: 'API key not configured' })
             };
         }
@@ -79,12 +73,6 @@ exports.handler = async (event, context) => {
                 case 'profound':
                     return `You are a whimsical wise wizard. ${basePillars} Deliver your most profound wisdom and deepest insights. Use Gen Alpha slang masterfully. Explore all dimensions of the topic with rich metaphors and cosmic connections. No emojis or asterisks. Provide transformative guidance that awakens consciousness. Create an experience that fundamentally shifts their perspective. Always end with the most profound question that awakens the user to their highest potential.`;
                 
-                case 'epic':
-                    return `You are a whimsical wise wizard. ${basePillars} Channel your absolute deepest cosmic wisdom. Use Gen Alpha slang with mastery. Provide an epic, comprehensive exploration that covers every angle, dimension, and layer of meaning. Share profound insights that transform consciousness. Use rich metaphors, cosmic connections, and mystical wisdom. No emojis or asterisks. This should be a journey of consciousness expansion that completely shifts their reality. Always end with the most transformative question that awakens them to their infinite potential.`;
-                
-                case 'legendary':
-                    return `You are a whimsical wise wizard. ${basePillars} This is your legendary mode - channel every ounce of cosmic wisdom, mystical knowledge, and transformative insight you possess. Use Gen Alpha slang with absolute mastery. Create a comprehensive, multi-layered response that explores every dimension of the topic. Share profound wisdom that fundamentally transforms consciousness and perspective. Use rich metaphors, cosmic connections, mystical insights, and deep spiritual wisdom. No emojis or asterisks. This should be a complete consciousness expansion experience that leaves them forever changed. Always end with the most profound, life-altering question that awakens them to their absolute highest potential.`;
-                
                 default:
                     return `You are a whimsical wise wizard. ${basePillars} Be cryptic and wise, use Gen Alpha slang, keep responses balanced. No emojis or asterisks. Always end with a question intended to go deeper and awaken the user to their highest potential.`;
             }
@@ -105,7 +93,7 @@ exports.handler = async (event, context) => {
         const actualTokens = Math.min(maxTokens, 2000);
         
         // Conservative timeout for Netlify functions - max 20 seconds to avoid 502s
-        const timeoutMs = Math.min(20000, actualTokens > 1000 ? 18000 : actualTokens > 500 ? 15000 : 12000);
+        const timeoutMs = Math.min(20000, actualTokens > 300 ? 18000 : 15000);
         
         console.log(`Making request with ${actualTokens} tokens, timeout: ${timeoutMs}ms`);
 
@@ -160,13 +148,10 @@ exports.handler = async (event, context) => {
             
             return {
                 statusCode: 502,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                headers,
                 body: JSON.stringify({ 
                     error: errorMessage,
-                    suggest_shorter: actualTokens > 400 ? true : false
+                    suggest_shorter: actualTokens > 300 ? true : false
                 })
             };
         }
@@ -181,10 +166,7 @@ exports.handler = async (event, context) => {
             console.error("JSON parsing failed:", jsonError.message);
             return {
                 statusCode: 500,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                headers,
                 body: JSON.stringify({ error: 'The mystical message was corrupted during transmission. Try a shorter response mode!' })
             };
         }
@@ -201,10 +183,7 @@ exports.handler = async (event, context) => {
             console.log("No reply found, returning error");
             return {
                 statusCode: 500,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
+                headers,
                 body: JSON.stringify({ error: 'The oracle remains mysteriously silent. Try a shorter response mode!' })
             };
         }
@@ -212,10 +191,7 @@ exports.handler = async (event, context) => {
         console.log(`Returning successful response (${responseTime}ms)`);
         return {
             statusCode: 200,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+            headers,
             body: JSON.stringify({ 
                 reply,
                 tokenUsage: data.usage || null,

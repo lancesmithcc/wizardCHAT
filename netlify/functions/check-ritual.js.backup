@@ -1,10 +1,24 @@
 exports.handler = async (event, context) => {
+    // Set headers for CORS
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Accept',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+    };
+
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
+    }
+
     if (event.httpMethod !== 'GET') {
         return {
             statusCode: 405,
-            headers: {
-                'Access-Control-Allow-Origin': '*'
-            },
+            headers,
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
@@ -15,25 +29,19 @@ exports.handler = async (event, context) => {
         if (!ritualId) {
             return {
                 statusCode: 400,
-                headers: {
-                    'Access-Control-Allow-Origin': '*'
-                },
+                headers,
                 body: JSON.stringify({ error: 'Ritual ID required' })
             };
         }
         
         console.log(`Checking ritual status: ${ritualId}`);
         
-        // In a real implementation, you'd query your database
-        // For now, we'll simulate checking ritual status
+        // Get ritual status (simulated for demo)
         const ritualStatus = await getRitualStatus(ritualId);
         
         return {
             statusCode: 200,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
+            headers,
             body: JSON.stringify(ritualStatus)
         };
         
@@ -42,9 +50,7 @@ exports.handler = async (event, context) => {
         
         return {
             statusCode: 500,
-            headers: {
-                'Access-Control-Allow-Origin': '*'
-            },
+            headers,
             body: JSON.stringify({ 
                 error: 'Failed to check ritual status',
                 complete: false
@@ -54,12 +60,16 @@ exports.handler = async (event, context) => {
 };
 
 async function getRitualStatus(ritualId) {
-    // This is a simplified version - in production you'd use a real database
-    // For demonstration, we'll simulate different states based on ritual age
+    // This is a simplified version for demo purposes
+    // In production you'd query a real database
     
     try {
         // Extract timestamp from ritual ID
         const timestamp = ritualId.split('_')[1];
+        if (!timestamp) {
+            throw new Error('Invalid ritual ID format');
+        }
+        
         const ritualStartTime = parseInt(timestamp);
         const elapsed = Date.now() - ritualStartTime;
         

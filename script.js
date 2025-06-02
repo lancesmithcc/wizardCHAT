@@ -994,164 +994,167 @@ document.addEventListener('DOMContentLoaded', () => {
             const tokenCount = getTokenCount(responseLengthSlider.value);
             const responseMode = getResponseMode(responseLengthSlider.value);
             
-            // Check if we should use ritual experience for longer responses
+            // For longer responses, show enhanced ritual experience
             if (tokenCount > 350) {
-                // Use ritual experience for longer responses
-                startWizardRitual(messageText, responseMode, tokenCount);
+                await sendMessageWithRitualExperience(messageText, responseMode, tokenCount);
             } else {
-                // Use immediate response for shorter responses
-                sendImmediateMessage(messageText, responseMode, tokenCount);
+                await sendImmediateMessage(messageText, responseMode, tokenCount);
             }
         }
     }
 
-    // Wizard Ritual Experience for longer responses (350+ tokens)
-    let currentRitual = null;
-    
-    async function startWizardRitual(messageText, responseMode, tokenCount) {
-        console.log(`Starting wizard ritual: ${tokenCount} tokens in ${responseMode} mode`);
+    // Enhanced ritual experience using timed phases with regular API
+    async function sendMessageWithRitualExperience(messageText, responseMode, tokenCount) {
+        console.log(`Starting ritual experience: ${tokenCount} tokens in ${responseMode} mode`);
         
         // Add to conversation history
         conversationHistory.push({ role: "user", content: messageText });
         
-        // Show initial ritual state
-        showRitualPhase({
+        let ritualStartTime = Date.now();
+        let ritualPhase = 1;
+        
+        // Show initial ritual phase
+        showSimpleRitualPhase({
             message: "Initiating mystical ritual...",
             description: "The cosmic energies begin to gather",
-            phase: 1
+            phase: 1,
+            startTime: ritualStartTime
         });
         
+        // Phase updates with timing
+        const phase2Timer = setTimeout(() => {
+            ritualPhase = 2;
+            showSimpleRitualPhase({
+                message: "Gathering cosmic energies...",
+                description: "Drawing power from distant galaxies", 
+                phase: 2,
+                startTime: ritualStartTime
+            });
+        }, 8000); // 8 seconds
+        
+        const phase3Timer = setTimeout(() => {
+            ritualPhase = 3;
+            showSimpleRitualPhase({
+                message: "Channeling interdimensional insights...",
+                description: "Bridging realms of consciousness",
+                phase: 3, 
+                startTime: ritualStartTime
+            });
+        }, 16000); // 16 seconds
+        
+        const phase4Timer = setTimeout(() => {
+            ritualPhase = 4;
+            showSimpleRitualPhase({
+                message: "Weaving legendary cosmic wisdom...",
+                description: "Crafting your personalized mystical guidance",
+                phase: 4,
+                startTime: ritualStartTime
+            });
+        }, 25000); // 25 seconds
+        
         try {
-            // Start background processing
-            const ritualId = `ritual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            currentRitual = {
-                id: ritualId,
-                startTime: Date.now(),
-                messageText: messageText,
-                responseMode: responseMode,
-                tokenCount: tokenCount
-            };
+            // Keep only last 10 messages
+            if (conversationHistory.length > 10) {
+                conversationHistory = conversationHistory.slice(-10);
+            }
             
-            const response = await fetch('/.netlify/functions/background-deepseek', {
+            // Extended timeout for longer responses
+            const timeoutMs = 40000; // 40 seconds
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+            }, timeoutMs);
+            
+            const response = await fetch('/.netlify/functions/deepseek-chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ritualId: ritualId,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
                     message: messageText,
-                    responseMode: responseMode,
-                    maxTokens: tokenCount
-                })
+                    conversationHistory: conversationHistory,
+                    maxTokens: tokenCount,
+                    responseMode: responseMode
+                }),
+                signal: controller.signal
             });
             
-            if (response.ok) {
-                // Start polling for results
-                startRitualPolling(ritualId);
+            clearTimeout(timeoutId);
+            clearTimeout(phase2Timer);
+            clearTimeout(phase3Timer);
+            clearTimeout(phase4Timer);
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (data && data.reply) {
+                // Show completion celebration
+                showSimpleRitualCompletion();
+                
+                setTimeout(() => {
+                    conversationHistory.push({ role: "assistant", content: data.reply });
+                    displayWizardResponse(data.reply);
+                    
+                    if (data.tokenUsage) {
+                        console.log(`Token usage:`, data.tokenUsage);
+                    }
+                    
+                    toggleWizardSpeaking(false);
+                }, 2000);
             } else {
-                const errorData = await response.json();
-                handleRitualFailure(errorData.error || 'Failed to start ritual');
+                throw new Error('Invalid response format');
             }
             
         } catch (error) {
-            console.error('Error starting ritual:', error);
-            handleRitualFailure('The cosmic energies are unstable. Try a shorter response mode!');
+            console.error('Ritual failed:', error);
+            clearTimeout(phase2Timer);
+            clearTimeout(phase3Timer);
+            clearTimeout(phase4Timer);
+            
+            const isAbortError = error.name === 'AbortError';
+            const is502Error = error.message && error.message.includes('502');
+            const isTimeoutError = error.message && (error.message.includes('timeout') || error.message.includes('time'));
+            
+            let errorMessage;
+            if (isAbortError || isTimeoutError) {
+                errorMessage = `The ${responseMode} ritual required more cosmic energy than available! The mystical servers timed out. Try "Deep Insights" (Level 3) or lower for more reliable wizardly wisdom.`;
+            } else if (is502Error) {
+                errorMessage = "The mystical servers are overwhelmed by your profound energy. Try using Level 1-3 for more reliable responses!";
+            } else {
+                errorMessage = error.message || "The cosmic energies have been disrupted!";
+            }
+            
+            handleSimpleRitualFailure(errorMessage, messageText);
         }
     }
     
-    function startRitualPolling(ritualId) {
-        console.log(`Starting polling for ritual: ${ritualId}`);
-        
-        const pollInterval = setInterval(async () => {
-            try {
-                const response = await fetch(`/.netlify/functions/check-ritual?id=${ritualId}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (data.complete) {
-                        clearInterval(pollInterval);
-                        
-                        if (data.status === 'completed' && data.result) {
-                            completeRitual(data.result);
-                        } else if (data.status === 'timeout') {
-                            handleRitualFailure(data.error || 'The cosmic ritual took too long');
-                        } else {
-                            handleRitualFailure(data.error || 'The ritual encountered an unexpected disruption');
-                        }
-                    } else {
-                        // Update ritual phase
-                        updateRitualPhase(data);
-                    }
-                } else {
-                    console.error('Polling failed:', response.status);
-                }
-                
-            } catch (error) {
-                console.error('Polling error:', error);
-            }
-        }, 5000); // Poll every 5 seconds
-        
-        // Safety timeout after 15 minutes
-        setTimeout(() => {
-            clearInterval(pollInterval);
-            if (currentRitual && currentRitual.id === ritualId) {
-                handleRitualFailure('The cosmic energies have dispersed after 15 minutes. Try a shorter response mode!');
-            }
-        }, 900000); // 15 minutes
-    }
-    
-    function showRitualPhase(phaseData) {
+    function showSimpleRitualPhase(phaseData) {
         if (!wizardSpeechBubble) return;
         
-        const elapsed = currentRitual ? Math.floor((Date.now() - currentRitual.startTime) / 1000) : 0;
+        const elapsed = Math.floor((Date.now() - phaseData.startTime) / 1000);
         
         wizardSpeechBubble.innerHTML = `
             <div class="ritual-phase">
                 <div class="ritual-message">${phaseData.message}</div>
                 <div class="ritual-description">${phaseData.description}</div>
-                <div class="ritual-timer">Elapsed: ${elapsed}s • Phase ${phaseData.phase || 1}</div>
+                <div class="ritual-timer">Elapsed: ${elapsed}s • Phase ${phaseData.phase}</div>
                 <div class="ritual-progress">
-                    <div class="progress-bar" style="width: ${Math.min(100, (elapsed / 180) * 100)}%"></div>
+                    <div class="progress-bar" style="width: ${Math.min(100, (elapsed / 45) * 100)}%"></div>
                 </div>
-                <button class="ritual-cancel" onclick="cancelRitual()">Cancel & Try Shorter Response</button>
+                <button class="ritual-cancel" onclick="cancelCurrentRitual()">Cancel & Try Shorter Response</button>
             </div>
         `;
         
         // Spawn ritual symbols
-        spawnRitualSymbols(phaseData.phase || 1);
+        spawnSimpleRitualSymbols(phaseData.phase);
     }
     
-    function updateRitualPhase(data) {
-        const phaseMessages = {
-            'gathering_energy': {
-                message: "Gathering cosmic energies...",
-                description: "Drawing power from distant galaxies"
-            },
-            'consulting_scrolls': {
-                message: "Consulting ancient scrolls...",
-                description: "Accessing the library of infinite wisdom"
-            },
-            'channeling_wisdom': {
-                message: "Channeling interdimensional insights...",
-                description: "Bridging realms of consciousness"
-            },
-            'weaving_wisdom': {
-                message: "Weaving legendary cosmic wisdom...",
-                description: "Crafting your personalized mystical guidance"
-            }
-        };
-        
-        const phaseData = phaseMessages[data.status] || {
-            message: data.message || "Processing mystical wisdom...",
-            description: "The universe is working on your request"
-        };
-        
-        phaseData.phase = data.phase || 1;
-        showRitualPhase(phaseData);
-    }
-    
-    function spawnRitualSymbols(phase) {
+    function spawnSimpleRitualSymbols(phase) {
         const ritualSymbols = ['🔮', '✨', '🌟', '⭐', '💫', '🌙', '🌞', '🔯', '☯️', '🕉️'];
-        const symbolCount = Math.min(10, phase * 3);
+        const symbolCount = Math.min(8, phase * 2);
         
         for (let i = 0; i < symbolCount; i++) {
             setTimeout(() => {
@@ -1165,25 +1168,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 vibrationalSymbols.appendChild(symbol);
                 
-                setTimeout(() => symbol.remove(), 8000);
-            }, i * 200);
+                setTimeout(() => symbol.remove(), 6000);
+            }, i * 150);
         }
     }
     
-    function completeRitual(result) {
-        console.log('Ritual completed:', result);
-        
-        // Show completion celebration
+    function showSimpleRitualCompletion() {
         wizardSpeechBubble.innerHTML = `
             <div class="ritual-complete">
                 <div class="completion-message">🎆 COSMIC TRANSMISSION COMPLETE! 🎆</div>
-                <div class="completion-description">Your legendary wisdom has manifested!</div>
+                <div class="completion-description">Your mystical wisdom has manifested!</div>
             </div>
         `;
         
         // Celebration symbol explosion
         const celebrationSymbols = ['✨', '🎆', '🌟', '💫', '🎊', '🎉'];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 15; i++) {
             setTimeout(() => {
                 const symbol = document.createElement('div');
                 symbol.className = 'celebration-symbol';
@@ -1194,55 +1194,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => symbol.remove(), 3000);
             }, i * 100);
         }
-        
-        // Show final result after celebration
-        setTimeout(() => {
-            conversationHistory.push({ role: "assistant", content: result.reply });
-            displayWizardResponse(result.reply);
-            
-            if (result.tokenUsage) {
-                console.log(`Ritual token usage:`, result.tokenUsage);
-            }
-            
-            currentRitual = null;
-            toggleWizardSpeaking(false);
-        }, 3000);
     }
     
-    function handleRitualFailure(error) {
-        console.error('Ritual failed:', error);
-        
+    function handleSimpleRitualFailure(error, originalMessage) {
         wizardSpeechBubble.innerHTML = `
             <div class="ritual-failed">
                 <div class="failure-message">The cosmic energies have been disrupted!</div>
                 <div class="failure-description">${error}</div>
-                <button onclick="retryWithShorterMode()">Try Shorter Response Mode</button>
+                <button onclick="retryWithShorterMode('${originalMessage}')">Try Shorter Response Mode</button>
             </div>
         `;
-        
-        currentRitual = null;
         toggleWizardSpeaking(false);
     }
     
-    window.cancelRitual = function() {
-        if (currentRitual) {
-            console.log('Cancelling ritual:', currentRitual.id);
-            handleRitualFailure('Ritual cancelled by user. Try a shorter response mode for faster results!');
-        }
+    window.cancelCurrentRitual = function() {
+        const currentLevel = parseInt(responseLengthSlider.value);
+        const newLevel = Math.max(1, currentLevel - 1);
+        responseLengthSlider.value = newLevel;
+        updateLengthIndicator(newLevel);
+        
+        handleSimpleRitualFailure('Ritual cancelled. Using shorter response mode for faster results!', '');
     };
     
-    window.retryWithShorterMode = function() {
-        if (currentRitual) {
-            const currentLevel = parseInt(responseLengthSlider.value);
-            const newLevel = Math.max(1, currentLevel - 1);
-            responseLengthSlider.value = newLevel;
-            updateLengthIndicator(newLevel);
-            
-            // Retry with shorter mode
-            chatInput.value = currentRitual.messageText;
-            currentRitual = null;
-            sendMessage();
+    window.retryWithShorterMode = function(originalMessage) {
+        const currentLevel = parseInt(responseLengthSlider.value);
+        const newLevel = Math.max(1, currentLevel - 1);
+        responseLengthSlider.value = newLevel;
+        updateLengthIndicator(newLevel);
+        
+        // Clear the speech bubble
+        wizardSpeechBubble.innerHTML = '';
+        
+        // Set the original message if provided
+        if (originalMessage) {
+            chatInput.value = originalMessage;
         }
+        
+        // Trigger new message
+        setTimeout(() => {
+            sendMessage();
+        }, 500);
     };
     
     // Immediate response for shorter messages (≤350 tokens)

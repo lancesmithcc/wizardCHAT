@@ -1,44 +1,55 @@
-const { promises: fs } = require('fs');
-const path = require('path');
-
 exports.handler = async (event, context) => {
+    // Set headers for CORS
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Accept',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+    };
+
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
+    }
+
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
+            headers,
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
 
+    let ritualId = null;
+    
     try {
-        const { ritualId, message, responseMode, maxTokens } = JSON.parse(event.body);
+        const requestBody = JSON.parse(event.body || '{}');
+        const { ritualId: requestRitualId, message, responseMode, maxTokens } = requestBody;
+        
+        ritualId = requestRitualId;
         
         console.log(`=== Background Ritual Started ===`);
         console.log(`Ritual ID: ${ritualId}`);
         console.log(`Mode: ${responseMode}, Tokens: ${maxTokens}`);
         
-        // Store initial status
-        await storeRitualStatus(ritualId, { 
-            status: 'processing', 
-            startTime: new Date().toISOString(),
-            message,
-            responseMode,
-            maxTokens
-        });
+        if (!message || !ritualId) {
+            throw new Error('Missing required fields: message and ritualId');
+        }
 
         // Start the actual AI processing
         const result = await processWizardResponse(message, responseMode, maxTokens);
         
-        // Store completed result
-        await storeRitualStatus(ritualId, { 
-            status: 'complete', 
-            result,
-            completedTime: new Date().toISOString()
-        });
-        
+        // In a real implementation, you'd store the result in a database
+        // For now, we'll just log it (the check-ritual function will simulate responses)
         console.log(`=== Ritual ${ritualId} Completed ===`);
+        console.log(`Response length: ${result.reply.length} characters`);
         
         return {
             statusCode: 200,
+            headers,
             body: JSON.stringify({ 
                 ritualId, 
                 status: 'processing',
@@ -49,18 +60,13 @@ exports.handler = async (event, context) => {
     } catch (error) {
         console.error('Ritual processing error:', error);
         
-        // Store error status
-        if (ritualId) {
-            await storeRitualStatus(ritualId, { 
-                status: 'error', 
-                error: error.message,
-                errorTime: new Date().toISOString()
-            });
-        }
-        
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'The cosmic energies have been disrupted!' })
+            headers,
+            body: JSON.stringify({ 
+                error: 'The cosmic energies have been disrupted!',
+                details: error.message
+            })
         };
     }
 };
@@ -91,7 +97,7 @@ async function processWizardResponse(message, responseMode, maxTokens) {
     
     console.log(`Making AI request: ${maxTokens} tokens in ${responseMode} mode`);
     
-    // Make the actual AI request with generous timeout
+    // Make the actual AI request
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -131,32 +137,4 @@ async function processWizardResponse(message, responseMode, maxTokens) {
         tokenUsage: data.usage,
         generatedAt: new Date().toISOString()
     };
-}
-
-async function storeRitualStatus(ritualId, data) {
-    // In a real implementation, you'd use a database
-    // For now, we'll use Netlify's temporary file system
-    // Note: This is just for demonstration - use a real database in production
-    
-    try {
-        const ritualData = {
-            id: ritualId,
-            ...data,
-            lastUpdated: new Date().toISOString()
-        };
-        
-        // Store in environment variable or use a simple key-value store
-        // For demo purposes, log to console
-        console.log(`Ritual Status Update: ${ritualId}`, ritualData);
-        
-        // In production, use something like:
-        // - Netlify Blobs
-        // - Supabase
-        // - PlanetScale
-        // - Redis
-        // - DynamoDB
-        
-    } catch (error) {
-        console.error('Failed to store ritual status:', error);
-    }
 }
