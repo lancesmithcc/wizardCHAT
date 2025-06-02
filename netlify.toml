@@ -1,2 +1,14 @@
 [build]
   functions = "netlify/functions"
+
+[functions]
+  timeout = 26
+
+[functions."deepseek-chat"]
+  timeout = 26
+
+[functions."fal-kokoro-tts"]
+  timeout = 60
+
+[functions."fal-whisper-stt"]
+  timeout = 60
