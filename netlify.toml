@@ -1,28 +1,2 @@
 [build]
   functions = "netlify/functions"
-
-[functions]
-  timeout = 26
-
-[functions."deepseek-chat"]
-  timeout = 26
-
-[functions."fal-kokoro-tts"]
-  timeout = 60
-
-[functions."fal-whisper-stt"]
-  timeout = 60
-
-# CORS headers for all functions
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type, Accept"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-
-# SPA redirect
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
