@@ -1,0 +1,32 @@
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  # Extend function timeout to maximum (26 seconds for Pro tier, 10s for free)
+  # For longer responses, we'll need streaming or background functions
+  timeout = 26
+
+[functions."deepseek-chat"]
+  # Try to use background function for longer processing
+  timeout = 900  # 15 minutes for background functions
+
+[functions."fal-kokoro-tts"]
+  timeout = 60
+
+[functions."fal-whisper-stt"]
+  timeout = 60
+
+# Redirect rules for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+
+# Set headers for CORS
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"

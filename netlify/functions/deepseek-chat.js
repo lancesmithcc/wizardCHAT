@@ -1,8 +1,21 @@
 exports.handler = async (event, context) => {
-    // Extended timeout for Netlify functions
-    context.callbackWaitsForEmptyEventLoop = false;
+    // Check for streaming support
+    const isStreamingRequest = event.headers['accept'] && event.headers['accept'].includes('text/stream');
     
     // Simple CORS and method check
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Accept',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+            },
+            body: ''
+        };
+    }
+    
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -15,8 +28,13 @@ exports.handler = async (event, context) => {
     }
 
     try {
+        const startTime = Date.now();
+        console.log('=== DeepSeek Chat Function Started ===');
+        
         // Parse request body with much higher token limits
         const { message, conversationHistory = [], maxTokens = 300, responseMode = 'moderate' } = JSON.parse(event.body || '{}');
+
+        console.log(`Request: ${maxTokens} tokens, mode: ${responseMode}, message length: ${message?.length || 0}`);
 
         if (!message?.trim()) {
             return {
@@ -83,22 +101,25 @@ exports.handler = async (event, context) => {
             { role: "user", content: message }
         ];
 
-        console.log(`Making request with ${maxTokens} tokens in ${responseMode} mode`);
-        const startTime = Date.now();
-
-        // Support much higher token limits - up to 2000 tokens
+        // Support much higher token limits - up to 2000 tokens, but be conservative for Netlify
         const actualTokens = Math.min(maxTokens, 2000);
         
-        // Extended timeout for longer responses - up to 120 seconds
-        const controller = new AbortController();
-        const timeoutMs = actualTokens > 1000 ? 120000 : actualTokens > 500 ? 90000 : 60000;
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        // Conservative timeout for Netlify functions - max 20 seconds to avoid 502s
+        const timeoutMs = Math.min(20000, actualTokens > 1000 ? 18000 : actualTokens > 500 ? 15000 : 12000);
         
         console.log(`Making request with ${actualTokens} tokens, timeout: ${timeoutMs}ms`);
 
         // Optimized temperature for longer responses
         const temperature = responseMode === 'legendary' ? 0.9 : responseMode === 'epic' ? 0.85 : 0.8;
 
+        // Create abort controller for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            console.log('Request timed out, aborting...');
+            controller.abort();
+        }, timeoutMs);
+
+        console.log('Sending request to DeepSeek API...');
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -127,14 +148,14 @@ exports.handler = async (event, context) => {
             console.error(`DeepSeek API error: ${response.status} - ${errorText}`);
             
             // Better error handling for different scenarios
-            let errorMessage = 'The mystical servers are temporarily overwhelmed. Try again soon!';
+            let errorMessage = 'The mystical servers are temporarily overwhelmed. Try a shorter response setting!';
             
             if (response.status === 429) {
                 errorMessage = 'The cosmic frequencies are too intense right now. Take a breath and try again in a moment, young seeker.';
             } else if (response.status === 401) {
                 errorMessage = 'The ancient seals reject this key. The wizardly administrators must check the mystical credentials.';
             } else if (response.status >= 500) {
-                errorMessage = 'The ethereal servers are having a cosmic hiccup. Your profound energy might be too much for them right now - try again!';
+                errorMessage = 'The ethereal servers are having a cosmic hiccup. Try a shorter response mode for more reliable magic!';
             }
             
             return {
@@ -144,70 +165,30 @@ exports.handler = async (event, context) => {
                     'Access-Control-Allow-Origin': '*'
                 },
                 body: JSON.stringify({ 
-                    error: errorMessage
+                    error: errorMessage,
+                    suggest_shorter: actualTokens > 400 ? true : false
                 })
             };
         }
 
-        console.log("Response OK, checking response size...");
+        console.log("Response OK, parsing...");
         
-        // Increased response size limit for longer content - 200KB
-        const contentLength = response.headers.get('content-length');
-        if (contentLength && parseInt(contentLength) > 200000) {
-            console.error(`Response too large: ${contentLength} bytes`);
-            return {
-                statusCode: 500,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'Response from the cosmos too vast for mortal comprehension' })
-            };
-        }
-        
-        console.log("Reading response as text...");
-        let responseText;
-        try {
-            // Extended timeout for reading large responses
-            const textPromise = response.text();
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Text reading timeout')), 10000)
-            );
-            
-            responseText = await Promise.race([textPromise, timeoutPromise]);
-            console.log(`Response text length: ${responseText.length}`);
-            console.log(`Response text preview: ${responseText.substring(0, 200)}...`);
-        } catch (textError) {
-            console.error("Text reading failed:", textError);
-            return {
-                statusCode: 500,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'Failed to receive the mystical transmission' })
-            };
-        }
-        
-        console.log("Parsing text as JSON...");
         let data;
         try {
-            data = JSON.parse(responseText);
+            data = await response.json();
             console.log("JSON parsed successfully");
         } catch (jsonError) {
             console.error("JSON parsing failed:", jsonError.message);
-            console.log("Raw response that failed to parse:", responseText.substring(0, 500));
             return {
                 statusCode: 500,
                 headers: { 
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'The mystical message was corrupted during transmission' })
+                body: JSON.stringify({ error: 'The mystical message was corrupted during transmission. Try a shorter response mode!' })
             };
         }
         
-        console.log("Extracting reply...");
         const reply = data.choices?.[0]?.message?.content?.trim();
         console.log(`Reply extracted, length: ${reply?.length || 0} characters`);
         
@@ -224,11 +205,11 @@ exports.handler = async (event, context) => {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'The oracle remains mysteriously silent' })
+                body: JSON.stringify({ error: 'The oracle remains mysteriously silent. Try a shorter response mode!' })
             };
         }
 
-        console.log("Returning successful response...");
+        console.log(`Returning successful response (${responseTime}ms)`);
         return {
             statusCode: 200,
             headers: { 
@@ -238,7 +219,8 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({ 
                 reply,
                 tokenUsage: data.usage || null,
-                responseTime: responseTime
+                responseTime: responseTime,
+                actualTokens: actualTokens
             })
         };
 
@@ -247,16 +229,20 @@ exports.handler = async (event, context) => {
         
         let errorMessage = 'A magical mishap occurred in the cosmic data streams';
         let statusCode = 500;
+        let suggestShorter = false;
         
         if (error.name === 'AbortError') {
-            errorMessage = 'The mystical connection transcended time itself. Your question was so profound it broke the space-time continuum! Try again, cosmic seeker.';
+            errorMessage = 'The mystical connection took too long! The universe is working overtime on your question. Try using "Deep Insights" or "Moderate Wisdom" for faster, more reliable responses.';
             statusCode = 504;
+            suggestShorter = true;
         } else if (error.message?.includes('fetch')) {
-            errorMessage = 'Cannot pierce the veil to the mystical realm. The cosmic WiFi seems to be having a moment.';
+            errorMessage = 'Cannot pierce the veil to the mystical realm. The cosmic WiFi seems to be having a moment. Try a shorter response mode!';
             statusCode = 502;
+            suggestShorter = true;
         } else if (error.message?.includes('timeout')) {
-            errorMessage = 'Your question was so deep it caused the universe to pause and contemplate. Try again, enlightened one.';
+            errorMessage = 'Your question was so profound it caused the universe to pause and contemplate! Try "Deep Insights" mode for more reliable cosmic responses.';
             statusCode = 504;
+            suggestShorter = true;
         }
         
         return {
@@ -265,7 +251,10 @@ exports.handler = async (event, context) => {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: JSON.stringify({ error: errorMessage })
+            body: JSON.stringify({ 
+                error: errorMessage,
+                suggest_shorter: suggestShorter
+            })
         };
     }
 };

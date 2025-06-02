@@ -1048,8 +1048,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.responseTime) {
                         console.log(`Response time: ${data.responseTime}ms`);
                     }
+                    if (data.actualTokens) {
+                        console.log(`Actual tokens requested: ${data.actualTokens}`);
+                    }
                     
                     displayWizardResponse(data.reply);
+                } else if (data && data.error && data.suggest_shorter) {
+                    // Backend suggests using a shorter response mode
+                    const currentLevel = parseInt(responseLengthSlider.value);
+                    const suggestedLevel = Math.max(1, currentLevel - 1);
+                    const errorWithSuggestion = data.error + ` Consider sliding down to Level ${suggestedLevel} for more reliable cosmic transmissions.`;
+                    displayWizardResponseWithRetry(errorWithSuggestion, messageText);
                 } else {
                     console.error("Invalid data structure from backend:", data);
                     displayWizardResponse("The wizard's words are jumbled (invalid response format)... perhaps a cosmic hiccup?", true);
@@ -1064,11 +1073,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isTimeoutError = error.message && (error.message.includes('timeout') || error.message.includes('time'));
                 
                 if (isAbortError || isTimeoutError) {
-                    // Handle timeout errors with retry option
+                    // Handle timeout errors with mode-specific guidance
                     const tokenCount = getTokenCount(responseLengthSlider.value);
-                    const timeoutMessage = tokenCount > 1000 
-                        ? "Your question awakened such profound cosmic wisdom that the universe itself needed extra time to process it! The mystical forces are working hard to deliver your legendary response."
-                        : "The mystical servers are taking their sweet time channeling the cosmic energies for your profound question.";
+                    const responseMode = getResponseMode(responseLengthSlider.value);
+                    
+                    let timeoutMessage;
+                    if (tokenCount > 500) {
+                        timeoutMessage = `The ${responseMode} mode requires more cosmic energy than Netlify can reliably channel! The mystical servers timed out. Try "Deep Insights" (Level 3) or lower for more reliable wizardly wisdom.`;
+                    } else if (tokenCount > 350) {
+                        timeoutMessage = "Your profound question pushed the cosmic servers to their limits! Try 'Deep Insights' or 'Moderate Wisdom' for more reliable mystical responses.";
+                    } else {
+                        timeoutMessage = "The mystical servers are taking their sweet time channeling the cosmic energies for your profound question.";
+                    }
                     displayWizardResponseWithRetry(timeoutMessage, messageText);
                 } else if (is502Error) {
                     // Show error message with try again button for 502 errors
@@ -1120,15 +1136,15 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Chat input not found.");
     }
 
-    // Response Length Control - Extended for longer responses
+    // Response Length Control - Adjusted for Netlify function reliability
     function getTokenCount(sliderValue) {
         const tokenMap = {
-            1: 100,   // Cryptic - mysterious questions
-            2: 200,   // Moderate Wisdom - balanced responses  
-            3: 400,   // Deep Insights - detailed responses
-            4: 700,   // Profound - comprehensive wisdom
-            5: 1100,  // Epic - extensive mystical knowledge
-            6: 1500   // Legendary - maximum cosmic wisdom (1441+ tokens)
+            1: 100,   // Cryptic - mysterious questions (very reliable)
+            2: 200,   // Moderate Wisdom - balanced responses (very reliable)
+            3: 350,   // Deep Insights - detailed responses (reliable) 
+            4: 500,   // Profound - comprehensive wisdom (may timeout)
+            5: 700,   // Epic - extensive mystical knowledge (often timeouts)
+            6: 900    // Legendary - maximum cosmic wisdom (frequently timeouts)
         };
         return tokenMap[sliderValue] || 200; // Default to moderate (200)
     }
@@ -1147,15 +1163,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateLengthIndicator(value) {
         const indicators = {
-            1: "Cryptic Questions",
-            2: "Moderate Wisdom", 
-            3: "Deep Insights",
-            4: "Profound Mysteries",
-            5: "Epic Wisdom",
-            6: "Legendary Cosmic Knowledge"
+            1: "Cryptic Questions ⚡ (Most Reliable)",
+            2: "Moderate Wisdom ⚡ (Most Reliable)", 
+            3: "Deep Insights ⚡ (Reliable)",
+            4: "Profound Mysteries ⚠️ (May timeout)",
+            5: "Epic Wisdom ⚠️ (Often timeouts)",
+            6: "Legendary Cosmic Knowledge ⚠️ (Frequently timeouts)"
         };
         if (lengthIndicator) {
             lengthIndicator.textContent = indicators[value] || "Moderate Wisdom";
+            
+            // Add visual styling based on reliability
+            lengthIndicator.className = 'length-indicator';
+            if (parseInt(value) <= 3) {
+                lengthIndicator.classList.add('reliable');
+            } else {
+                lengthIndicator.classList.add('unreliable');
+            }
         }
     }
 
