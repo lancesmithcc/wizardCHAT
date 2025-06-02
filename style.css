@@ -677,6 +677,209 @@ body.vibrational-pulse {
     animation: aurora-text-user 8s ease infinite alternate;
 }
 
+/* Wizard Ritual Experience Styles */
+.ritual-phase {
+    text-align: center;
+    padding: 15px;
+    color: var(--aurora-color2) !important;
+}
+
+.ritual-message {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: var(--aurora-color1) !important;
+    text-shadow: 0 0 10px var(--aurora-color1);
+    animation: aurora-text-wizard-response 8s ease infinite alternate;
+}
+
+.ritual-description {
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    color: var(--aurora-color3) !important;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.ritual-timer {
+    font-size: 0.75em;
+    margin-bottom: 10px;
+    color: #aaa;
+    font-family: monospace;
+}
+
+.ritual-progress {
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--aurora-color1), var(--aurora-color2), var(--aurora-color3));
+    background-size: 200% 100%;
+    animation: progress-shimmer 3s ease infinite;
+    transition: width 1s ease;
+}
+
+@keyframes progress-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.ritual-cancel {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.ritual-cancel:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, #ff5252, #e53e3e);
+}
+
+.ritual-complete {
+    text-align: center;
+    padding: 20px;
+}
+
+.completion-message {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #4ade80 !important;
+    text-shadow: 0 0 15px #4ade80;
+    margin-bottom: 10px;
+    animation: completion-pulse 2s ease infinite;
+}
+
+.completion-description {
+    font-size: 0.9em;
+    color: var(--aurora-color2) !important;
+    font-style: italic;
+}
+
+@keyframes completion-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.ritual-failed {
+    text-align: center;
+    padding: 15px;
+}
+
+.failure-message {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #f87171 !important;
+    text-shadow: 0 0 10px #f87171;
+    margin-bottom: 8px;
+}
+
+.failure-description {
+    font-size: 0.9em;
+    color: #fbbf24 !important;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.ritual-failed button {
+    background: linear-gradient(45deg, var(--aurora-color1), var(--aurora-color2));
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.ritual-failed button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(45deg, var(--aurora-color2), var(--aurora-color3));
+}
+
+.ritual-symbol {
+    position: absolute;
+    font-size: 20px;
+    opacity: 0;
+    animation: ritual-symbol-appear 4s ease-out forwards, ritual-symbol-float 6s ease-in-out infinite;
+    user-select: none;
+    pointer-events: none;
+    color: var(--aurora-color1);
+    text-shadow: 0 0 12px var(--aurora-color1);
+}
+
+@keyframes ritual-symbol-appear {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(180deg);
+    }
+    100% {
+        opacity: 0.9;
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+@keyframes ritual-symbol-float {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-10px) rotate(90deg);
+    }
+    50% {
+        transform: translateY(5px) rotate(180deg);
+    }
+    75% {
+        transform: translateY(-5px) rotate(270deg);
+    }
+}
+
+.celebration-symbol {
+    position: absolute;
+    font-size: 24px;
+    opacity: 0;
+    animation: celebration-explosion 3s ease-out forwards;
+    user-select: none;
+    pointer-events: none;
+    color: #ffd700;
+    text-shadow: 0 0 15px #ffd700;
+}
+
+@keyframes celebration-explosion {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) rotate(0deg) translateY(0);
+    }
+    20% {
+        opacity: 1;
+        transform: scale(1.5) rotate(180deg) translateY(-20px);
+    }
+    80% {
+        opacity: 0.8;
+        transform: scale(1) rotate(360deg) translateY(-40px);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.3) rotate(540deg) translateY(-60px);
+    }
+}
+
 /* Heartbeat animation for speech bubble when wizard is speaking */
 #wizard-ascii.speaking + .wizard-speech {
     animation: aurora-text-wizard-response 33s ease infinite alternate, speech-bubble-heartbeat 5s infinite;
