@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let audioContext = null;
     let wizardAudioEffects = null;
 
+    // Response caching for performance
+    const responseCache = new Map();
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+    function getCacheKey(message, mode, tokens) {
+        return `${message.toLowerCase().trim()}_${mode}_${tokens}`;
+    }
+
     // Massively expanded vibrational symbol arrays with HTML entities and mystical symbols
     const positiveSymbols = [
         // Celestial & Light
@@ -382,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         vibrationalSymbols.innerHTML = '';
     }
 
-    // Spawn magical symbols (now persist until next query)
+    // Spawn magical symbols (now persist until next query) - OPTIMIZED
     function spawnVibrationalSymbols(vibrationalLevel, messageLength, messageText) {
         if (!vibrationalSymbols) return;
         
@@ -391,39 +399,45 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const isPositive = vibrationalLevel > 0;
         const intensity = Math.abs(vibrationalLevel);
-        // Ensure at least 10 symbols, up to 25 for strong vibrations
-        const symbolCount = Math.min(25, Math.max(10, (intensity * 6) + Math.floor(messageLength / 10)));
+        // Reduced max symbols from 25 to 15 for better performance
+        const symbolCount = Math.min(15, Math.max(5, (intensity * 3) + Math.floor(messageLength / 20)));
         
         // Get thematically appropriate symbols for this message
         const thematicSymbols = getThematicSymbols(messageText, isPositive);
         
-        for (let i = 0; i < symbolCount; i++) {
-            setTimeout(() => {
-                const symbol = document.createElement('div');
-                symbol.className = `vibrational-symbol ${isPositive ? 'positive' : 'negative'}`;
-                
-                // Choose from thematic symbols (70% chance) or general symbols (30% chance)
-                const useThematic = Math.random() < 0.7;
-                const symbolArray = useThematic ? thematicSymbols : (isPositive ? positiveSymbols : negativeSymbols);
-                const chosenSymbol = symbolArray[Math.floor(Math.random() * symbolArray.length)];
-                symbol.textContent = chosenSymbol;
-                
-                // Random position (zodiac symbols are now permanent in the wheel)
-                symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
-                symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
-                
-                // Vary size based on intensity and randomness
-                const size = 18 + (intensity * 6) + Math.random() * 20;
-                symbol.style.fontSize = size + 'px';
-                
-                // Add random delay to pulsing animation
-                symbol.style.animationDelay = Math.random() * 2 + 's';
-                
-                vibrationalSymbols.appendChild(symbol);
-                
-                // Symbols now persist until next query (no automatic removal)
-            }, i * 150); // Faster stagger
+        // Use requestAnimationFrame for smoother animations
+        let symbolIndex = 0;
+        function addSymbol() {
+            if (symbolIndex >= symbolCount) return;
+            
+            const symbol = document.createElement('div');
+            symbol.className = `vibrational-symbol ${isPositive ? 'positive' : 'negative'}`;
+            
+            // Choose from thematic symbols (70% chance) or general symbols (30% chance)
+            const useThematic = Math.random() < 0.7;
+            const symbolArray = useThematic ? thematicSymbols : (isPositive ? positiveSymbols : negativeSymbols);
+            const chosenSymbol = symbolArray[Math.floor(Math.random() * symbolArray.length)];
+            symbol.textContent = chosenSymbol;
+            
+            // Random position (zodiac symbols are now permanent in the wheel)
+            symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
+            symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
+            
+            // Vary size based on intensity and randomness
+            const size = 18 + (intensity * 4) + Math.random() * 15;
+            symbol.style.fontSize = size + 'px';
+            
+            // Add random delay to pulsing animation
+            symbol.style.animationDelay = Math.random() * 2 + 's';
+            
+            vibrationalSymbols.appendChild(symbol);
+            symbolIndex++;
+            
+            // Use RAF instead of setTimeout for smoother performance
+            requestAnimationFrame(addSymbol);
         }
+        
+        requestAnimationFrame(addSymbol);
     }
 
     function blobToDataUrl(blob) {
@@ -725,9 +739,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const retryButton = document.createElement('button');
         retryButton.textContent = 'Try Again';
         retryButton.style.cssText = `
-            background: linear-gradient(45deg, #8b5cf6, #a855f7);
+            background: none;;
             color: white;
-            border: none;
+            border: solid 1px #555;
             padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
@@ -1240,6 +1254,17 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendImmediateMessage(messageText, responseMode, tokenCount) {
         console.log(`Sending immediate message: ${tokenCount} tokens in ${responseMode} mode`);
         
+        // Check cache first
+        const cacheKey = getCacheKey(messageText, responseMode, tokenCount);
+        const cached = responseCache.get(cacheKey);
+
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+            console.log('Using cached response');
+            displayWizardResponse(cached.reply);
+            setTimeout(() => toggleWizardSpeaking(false), 1000);
+            return;
+        }
+        
         // Show conjuring loading state
         showConjuringState();
         
@@ -1295,6 +1320,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && data.reply) {
                 // Add wizard's response to conversation history
                 conversationHistory.push({ role: "assistant", content: data.reply });
+                
+                // Cache the response
+                responseCache.set(cacheKey, {
+                    reply: data.reply,
+                    timestamp: Date.now()
+                });
+                
+                // Clean old cache entries if too many
+                if (responseCache.size > 20) {
+                    const oldestKey = responseCache.keys().next().value;
+                    responseCache.delete(oldestKey);
+                }
                 
                 // Log token usage if available
                 if (data.tokenUsage) {
@@ -1362,17 +1399,17 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Chat input not found.");
     }
 
-    // Response Length Control - Adjusted for Netlify function reliability
+    // Response Length Control - Optimized for Netlify free tier reliability
     function getTokenCount(sliderValue) {
         const tokenMap = {
-            1: 100,   // Cryptic - mysterious questions 
-            2: 200,   // Moderate Wisdom - balanced responses 
-            3: 350,   // Deep Insights - detailed responses
-            4: 500,   // Profound - comprehensive wisdom 
-            5: 700,   // Epic - extensive mystical knowledge
-            6: 900    // Legendary - maximum cosmic wisdom
+            1: 80,    // Cryptic - mysterious questions (reduced from 100)
+            2: 150,   // Moderate Wisdom - balanced responses (reduced from 200)
+            3: 250,   // Deep Insights - detailed responses (reduced from 350)
+            4: 350,   // Profound - comprehensive wisdom (reduced from 500)
+            5: 450,   // Epic - extensive mystical knowledge (reduced from 700)
+            6: 550    // Legendary - maximum cosmic wisdom (reduced from 900)
         };
-        return tokenMap[sliderValue] || 200; // Default to moderate (200)
+        return tokenMap[sliderValue] || 150; // Default to moderate
     }
 
     function getResponseMode(sliderValue) {
@@ -1389,23 +1426,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateLengthIndicator(value) {
         const indicators = {
-            1: "Cryptic Questions",
-            2: "Moderate Wisdom", 
-            3: "Deep Insights",
-            4: "Profound Mysteries",
-            5: "Epic Wisdom",
-            6: "Legendary Cosmic Knowledge"
+            1: "Cryptic Questions ⚡",
+            2: "Moderate Wisdom ⚡", 
+            3: "Deep Insights ⚡",
+            4: "Profound Mysteries ⚠️",
+            5: "Epic Wisdom ⚠️",
+            6: "Legendary Knowledge ⚠️"
         };
+        
+        const warnings = {
+            4: " (May timeout on busy servers)",
+            5: " (Longer wait, possible timeout)",
+            6: " (Maximum wait, timeout likely)"
+        };
+        
         if (lengthIndicator) {
-            lengthIndicator.textContent = indicators[value] || "Moderate Wisdom";
+            const baseText = indicators[value] || "Moderate Wisdom";
+            const warning = warnings[value] || "";
+            lengthIndicator.textContent = baseText + warning;
             
             // Add visual styling based on reliability
             lengthIndicator.className = 'length-indicator';
-            if (parseInt(value) <= 3) {
-                lengthIndicator.classList.add('reliable');
-            } else {
-                lengthIndicator.classList.add('unreliable');
-            }
+            lengthIndicator.classList.add(parseInt(value) <= 3 ? 'reliable' : 'unreliable');
         }
     }
 
@@ -1423,5 +1465,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMicrophone();
     createAstrologicalWheel();
     initializeBackgroundMusic();
-    initializeAudioEffects();
+    // initializeAudioEffects();
 });
