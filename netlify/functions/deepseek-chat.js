@@ -89,44 +89,105 @@ exports.handler = async (event, context) => {
             { role: "user", content: message }
         ];
 
-        // Support much higher token limits - up to 2000 tokens, but be conservative for Netlify
-        const actualTokens = Math.min(maxTokens, 2000);
+        // Support higher token limits but optimize for Netlify's constraints
+        const actualTokens = Math.min(maxTokens, 1000); // Reduced max from 2000
         
-        // Conservative timeout for Netlify functions - max 20 seconds to avoid 502s
-        const timeoutMs = Math.min(20000, actualTokens > 300 ? 18000 : 15000);
+        // More aggressive timeout for Netlify functions - scale with token count
+        const timeoutMs = Math.min(18000, actualTokens > 250 ? 15000 : 12000);
         
         console.log(`Making request with ${actualTokens} tokens, timeout: ${timeoutMs}ms`);
 
-        // Optimized temperature for longer responses
-        const temperature = responseMode === 'legendary' ? 0.9 : responseMode === 'epic' ? 0.85 : 0.8;
+        // Optimized temperature for response modes
+        const temperature = responseMode === 'legendary' ? 0.85 : responseMode === 'epic' ? 0.8 : 0.75;
 
-        // Create abort controller for timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-            console.log('Request timed out, aborting...');
-            controller.abort();
-        }, timeoutMs);
+        // Implement retry logic with exponential backoff
+        const MAX_RETRIES = 2;
+        let retries = 0;
+        let lastError = null;
+        
+        while (retries < MAX_RETRIES) {
+            try {
+                // Create abort controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    console.log(`Request attempt ${retries + 1} timed out, aborting...`);
+                    controller.abort();
+                }, timeoutMs);
 
-        console.log('Sending request to DeepSeek API...');
-        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'deepseek-chat',
-                messages: messages,
-                temperature: temperature,
-                max_tokens: actualTokens,
-                top_p: 0.95,
-                presence_penalty: 0.1,
-                frequency_penalty: 0.1
-            }),
-            signal: controller.signal
-        });
+                console.log(`Sending request to DeepSeek API (attempt ${retries + 1})...`);
+                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: messages,
+                        temperature: temperature,
+                        max_tokens: actualTokens,
+                        top_p: 0.95,
+                        presence_penalty: 0.1,
+                        frequency_penalty: 0.1
+                    }),
+                    signal: controller.signal
+                });
 
-        clearTimeout(timeoutId);
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    // Success! Process the response
+                    const responseTime = Date.now() - startTime;
+                    console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    const reply = data.choices?.[0]?.message?.content?.trim();
+                    
+                    if (reply) {
+                        console.log(`Reply extracted, length: ${reply.length} characters`);
+                        if (data.usage) {
+                            console.log(`Token usage - Prompt: ${data.usage.prompt_tokens}, Completion: ${data.usage.completion_tokens}, Total: ${data.usage.total_tokens}`);
+                        }
+                        
+                        return {
+                            statusCode: 200,
+                            headers,
+                            body: JSON.stringify({ 
+                                reply,
+                                tokenUsage: data.usage || null,
+                                responseTime: responseTime,
+                                actualTokens: actualTokens
+                            })
+                        };
+                    }
+                }
+                
+                // If we get here, response wasn't ok or no reply
+                lastError = new Error(`API returned ${response.status}`);
+                retries++;
+                
+                if (retries < MAX_RETRIES) {
+                    const backoffDelay = Math.pow(2, retries) * 1000; // Exponential backoff
+                    console.log(`Retrying after ${backoffDelay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                }
+                
+            } catch (error) {
+                lastError = error;
+                retries++;
+                
+                if (retries < MAX_RETRIES && error.name !== 'AbortError') {
+                    const backoffDelay = Math.pow(2, retries) * 1000;
+                    console.log(`Error on attempt ${retries}: ${error.message}. Retrying after ${backoffDelay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                } else {
+                    break; // Don't retry abort errors or if max retries reached
+                }
+            }
+        }
+        
+        // All retries failed
+        throw lastError || new Error('All retry attempts failed');
         const responseTime = Date.now() - startTime;
         console.log(`DeepSeek API response received in ${responseTime}ms, status: ${response.status}`);
 

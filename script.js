@@ -864,12 +864,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         channelCount: 1,
                         sampleRate: 16000,
                         echoCancellation: true,
-                        noiseSuppression: true
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        sampleSize: 16
                     }
                 });
                 
-                // Try to use a more compressed format
-                const options = { mimeType: 'audio/webm;codecs=opus' };
+                // Use lower quality for smaller files
+                const options = { 
+                    mimeType: 'audio/webm;codecs=opus',
+                    audioBitsPerSecond: 16000 // Lower bitrate for smaller files
+                };
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
                     options.mimeType = 'audio/webm';
                 }
@@ -882,15 +887,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 mediaRecorder.onstart = () => {
                     console.log("Recording started");
-                    chatInput.placeholder = "Listening... speak thy truth... (max 30s)";
+                    chatInput.placeholder = "Listening... speak thy truth... (max 20s)";
                     if (micButton) micButton.classList.add('recording');
                     
-                    // Auto-stop recording after 30 seconds
+                    // Auto-stop recording after 20 seconds (reduced from 30)
                     recordingTimeout = setTimeout(() => {
                         if (mediaRecorder && mediaRecorder.state === "recording") {
                             mediaRecorder.stop();
                         }
-                    }, 30000);
+                    }, 20000);
                 };
 
                 mediaRecorder.onstop = async () => {
