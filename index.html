@@ -28,13 +28,47 @@
     <meta name="twitter:image" content="https://wizardchat.netlify.app/wizard-preview.png">
     <meta name="twitter:creator" content="@WizardCHAT">
     
-    <!-- Additional SEO -->
-    <meta name="theme-color" content="#4a00e0">
+    <!-- PWA Configuration -->
+    <meta name="theme-color" content="#a784ea">
+    <meta name="msapplication-TileColor" content="#29037c">
+    <meta name="msapplication-config" content="browserconfig.xml">
     <link rel="canonical" href="https://wizardchat.netlify.app">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icons -->
     <meta name="application-name" content="WizardCHAT">
     <meta name="apple-mobile-web-app-title" content="WizardCHAT">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" sizes="57x57" href="icons/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="icons/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="icons/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="icons/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="icons/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icons/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180x180.png">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48x48.png">
+    <link rel="icon" type="image/svg+xml" href="icons/wizchatlogo.svg">
+    <link rel="shortcut icon" href="favicon.png">
+    
+    <!-- Android Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/android-chrome-512x512.png">
+    
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileImage" content="icons/mstile-144x144.png">
+    <meta name="msapplication-square70x70logo" content="icons/mstile-70x70.png">
+    <meta name="msapplication-square150x150logo" content="icons/mstile-150x150.png">
+    <meta name="msapplication-wide310x150logo" content="icons/mstile-310x150.png">
+    <meta name="msapplication-square310x310logo" content="icons/mstile-310x310.png">
     
     <!-- Schema.org JSON-LD -->
     <script type="application/ld+json">
@@ -142,5 +176,76 @@
     
     <!-- LOCAL SCRIPT - CRITICAL: Must be loaded after FAL SDK and after DOM elements are defined -->
     <script src="script.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('🎭 WizardCHAT Service Worker registered successfully:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', function() {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', function() {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('✨ New wizard powers available! Refresh to update.');
+                                    // Optionally show update notification to user
+                                    if (confirm('New wizard powers are available! Would you like to refresh to get them?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log('❌ WizardCHAT Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            
+            // Show install button or prompt (you can customize this)
+            console.log('🎭 PWA install prompt available');
+            
+            // Optionally show a custom install button
+            setTimeout(() => {
+                if (deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+                    const shouldInstall = confirm('✨ Install WizardCHAT as an app for the full mystical experience?');
+                    if (shouldInstall) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then((choiceResult) => {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('🎉 User accepted the PWA install prompt');
+                            } else {
+                                console.log('😔 User dismissed the PWA install prompt');
+                            }
+                            deferredPrompt = null;
+                        });
+                    }
+                }
+            }, 5000); // Show after 5 seconds
+        });
+        
+        // Track when app is installed
+        window.addEventListener('appinstalled', function(evt) {
+            console.log('🎉 WizardCHAT PWA was installed successfully!');
+            // Track the event if you have analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'pwa_install', {
+                    'event_category': 'engagement',
+                    'event_label': 'wizard_app_installed'
+                });
+            }
+        });
+    </script>
 </body>
 </html> 
