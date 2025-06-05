@@ -3,12 +3,3 @@
 
 [functions]
   timeout = 26
-
-[functions."deepseek-chat"]
-  timeout = 26
-
-[functions."fal-kokoro-tts"]
-  timeout = 26
-
-[functions."fal-whisper-stt"]
-  timeout = 26
