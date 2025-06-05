@@ -325,6 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     wizardSpeechBubble.textContent += text.charAt(charIndex);
                     charIndex++;
                     requestAnimationFrame(() => setTimeout(typeChar, 25));
+                } else {
+                    // Typing effect complete - show random wizard meme
+                    displayRandomWizardMeme();
                 }
             }
             typeChar();
@@ -634,6 +637,23 @@ document.addEventListener('DOMContentLoaded', () => {
         updateLengthIndicator(event.target.value);
     });
 
+    // Wizard Meme Modal event listeners
+    wizardMemeClose?.addEventListener('click', hideWizardMeme);
+    
+    wizardMemeModal?.addEventListener('click', (event) => {
+        // Close modal if clicking outside the content
+        if (event.target === wizardMemeModal) {
+            hideWizardMeme();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && wizardMemeModal?.classList.contains('active')) {
+            hideWizardMeme();
+        }
+    });
+
     // OPTIMIZATION: Connection monitoring
     window.addEventListener('online', () => {
         connectionStatus = 'online';
@@ -649,4 +669,127 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMicrophone();
     createAstrologicalWheel();
     updateLengthIndicator(responseLengthSlider?.value || 3);
+    initializeWizardMemes(); // Initialize wizard memes
+
+    // Wizard Meme functionality
+    let wizardMemes = [];
+    let memeCache = null;
+    let memeCacheTimestamp = 0;
+    const MEME_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+    // Wizard Meme Modal elements
+    const wizardMemeModal = document.getElementById('wizard-meme-modal');
+    const wizardMemeClose = document.getElementById('wizard-meme-close');
+    const wizardMemeContainer = document.getElementById('wizard-meme-container');
+
+    // Wizard Meme Functions
+    async function fetchWizardMemes() {
+        // Check cache first
+        if (memeCache && Date.now() - memeCacheTimestamp < MEME_CACHE_DURATION) {
+            return memeCache;
+        }
+        
+        try {
+            const response = await fetch('/.netlify/functions/imgur-wizard-memes');
+            if (response.ok) {
+                const data = await response.json();
+                memeCache = data.memes || [];
+                memeCacheTimestamp = Date.now();
+                return memeCache;
+            }
+        } catch (error) {
+            console.error('Failed to fetch wizard memes:', error);
+        }
+        
+        // Return empty array if fetch fails
+        return [];
+    }
+
+    function getRandomWizardMeme() {
+        if (wizardMemes.length === 0) {
+            return null;
+        }
+        const randomIndex = Math.floor(Math.random() * wizardMemes.length);
+        return wizardMemes[randomIndex];
+    }
+
+    function showWizardMeme(meme) {
+        if (!meme || !wizardMemeModal || !wizardMemeContainer) return;
+        
+        // Clear previous content
+        wizardMemeContainer.innerHTML = '';
+        
+        // Create meme image
+        const img = document.createElement('img');
+        img.className = 'wizard-meme-image';
+        img.alt = meme.title || 'Wizard Meme';
+        img.src = meme.thumbnail || meme.url;
+        
+        // Add loading state
+        const loading = document.createElement('div');
+        loading.className = 'wizard-meme-loading';
+        loading.textContent = '🔮 Loading mystical meme...';
+        wizardMemeContainer.appendChild(loading);
+        
+        img.onload = () => {
+            wizardMemeContainer.innerHTML = '';
+            wizardMemeContainer.appendChild(img);
+        };
+        
+        img.onerror = () => {
+            wizardMemeContainer.innerHTML = `
+                <div class="wizard-meme-error">
+                    🧙‍♂️ The meme portal has mysteriously closed.<br>
+                    Perhaps the ancient servers need more mana...
+                </div>
+            `;
+        };
+        
+        // Update title
+        const title = document.querySelector('.wizard-meme-title');
+        if (title) {
+            title.textContent = meme.title || 'Mystical Wizard Wisdom';
+        }
+        
+        // Show modal
+        wizardMemeModal.classList.add('active');
+    }
+
+    function hideWizardMeme() {
+        if (wizardMemeModal) {
+            wizardMemeModal.classList.remove('active');
+        }
+    }
+
+    async function displayRandomWizardMeme() {
+        // Only show meme 70% of the time to not be too overwhelming
+        if (Math.random() > 0.7) return;
+        
+        try {
+            // Ensure we have memes loaded
+            if (wizardMemes.length === 0) {
+                wizardMemes = await fetchWizardMemes();
+            }
+            
+            const meme = getRandomWizardMeme();
+            if (meme) {
+                // Delay meme appearance slightly after response
+                setTimeout(() => {
+                    showWizardMeme(meme);
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Error displaying wizard meme:', error);
+        }
+    }
+
+    // Initialize meme functionality
+    async function initializeWizardMemes() {
+        try {
+            wizardMemes = await fetchWizardMemes();
+            console.log(`Loaded ${wizardMemes.length} wizard memes`);
+        } catch (error) {
+            console.error('Failed to initialize wizard memes:', error);
+        }
+    }
 });
