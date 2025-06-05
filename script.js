@@ -1,15 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const micButton = document.getElementById('mic-button');
-    const wizardAscii = document.getElementById('wizard-ascii');
+    // OPTIMIZATION: Get wizard speech bubble and other DOM elements
+    const wizardSpeechBubble = document.getElementById('wizard-speech-bubble');
+    const userChatLog = document.getElementById('user-chat-log');
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('send-button');
-    const userChatLog = document.getElementById('user-chat-log');
-    const wizardSpeechBubble = document.getElementById('wizard-speech-bubble');
-    const vibrationalSymbols = document.querySelector('.vibrational-symbols');
-    const astrologicalWheel = document.querySelector('.astrological-wheel');
+    const micButton = document.getElementById('mic-button');
     const responseLengthSlider = document.getElementById('response-length-slider');
     const lengthIndicator = document.getElementById('length-indicator');
+    const wizardAscii = document.getElementById('wizard-ascii');
+    
+    // Wizard Meme Modal elements
+    const wizardMemeModal = document.getElementById('wizard-meme-modal');
+    const wizardMemeClose = document.getElementById('wizard-meme-close');
+    const wizardMemeContainer = document.getElementById('wizard-meme-container');
+    
+    // Other DOM elements
+    const vibrationalSymbols = document.querySelector('.vibrational-symbols');
+    const astrologicalWheel = document.querySelector('.astrological-wheel');
 
+    // OPTIMIZATION: Constants
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    const MIN_REQUEST_INTERVAL = 1000; // 1 second
+    const MAX_CACHE_SIZE = 50;
+    
+    // Wizard Meme functionality
+    let wizardMemes = [];
+    let memeCache = null;
+    let memeCacheTimestamp = 0;
+    const MEME_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+    // OPTIMIZATION: Cache keys and pooling
+    const symbolPool = [];
+    let ttsQueue = [];
+    let isTTSPlaying = false;
+
+    // OPTIMIZATION: Variables for audio features
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
@@ -22,22 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // OPTIMIZATION: Enhanced caching with larger cache and longer duration
     const responseCache = new Map();
-    const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
-    const MAX_CACHE_SIZE = 50; // Increased from 20
+    const MAX_SYMBOL_POOL_SIZE = 30;
 
     // OPTIMIZATION: Connection status tracking
     let connectionStatus = 'online';
     let lastRequestTime = 0;
-    const MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
 
     // OPTIMIZATION: Request queue for debouncing
     let pendingRequest = null;
 
     // OPTIMIZATION: Symbol pool for reuse instead of creating new ones
-    const symbolPool = [];
-    const MAX_SYMBOL_POOL_SIZE = 30;
-
-    // OPTIMIZATION: Reduced symbol arrays for better memory usage
     const positiveSymbols = [
         '☀️', '🌟', '✨', '💫', '⭐', '🌙', '💎', '🔮', '🕉️', '☯️', 
         '🙏', '✝️', '☪️', '🔯', '☮️', '🕎', '⚛️', '🧿', '📿', '⛩️',
@@ -236,23 +255,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // OPTIMIZATION: Debounced TTS
-    let ttsQueue = [];
-    let isSpeaking = false;
-
     async function speakWizardResponse(text) {
         ttsQueue.push(text);
-        if (!isSpeaking) {
+        if (!isTTSPlaying) {
             processTTSQueue();
         }
     }
 
     async function processTTSQueue() {
         if (ttsQueue.length === 0) {
-            isSpeaking = false;
+            isTTSPlaying = false;
             return;
         }
         
-        isSpeaking = true;
+        isTTSPlaying = true;
         const text = ttsQueue.shift();
         
         try {
@@ -670,17 +686,6 @@ document.addEventListener('DOMContentLoaded', () => {
     createAstrologicalWheel();
     updateLengthIndicator(responseLengthSlider?.value || 3);
     initializeWizardMemes(); // Initialize wizard memes
-
-    // Wizard Meme functionality
-    let wizardMemes = [];
-    let memeCache = null;
-    let memeCacheTimestamp = 0;
-    const MEME_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-
-    // Wizard Meme Modal elements
-    const wizardMemeModal = document.getElementById('wizard-meme-modal');
-    const wizardMemeClose = document.getElementById('wizard-meme-close');
-    const wizardMemeContainer = document.getElementById('wizard-meme-container');
 
     // Wizard Meme Functions
     async function fetchWizardMemes() {
