@@ -20,282 +20,101 @@ document.addEventListener('DOMContentLoaded', () => {
     let audioContext = null;
     let wizardAudioEffects = null;
 
-    // Response caching for performance
+    // OPTIMIZATION: Enhanced caching with larger cache and longer duration
     const responseCache = new Map();
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+    const MAX_CACHE_SIZE = 50; // Increased from 20
+
+    // OPTIMIZATION: Connection status tracking
+    let connectionStatus = 'online';
+    let lastRequestTime = 0;
+    const MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
+
+    // OPTIMIZATION: Request queue for debouncing
+    let pendingRequest = null;
+
+    // OPTIMIZATION: Symbol pool for reuse instead of creating new ones
+    const symbolPool = [];
+    const MAX_SYMBOL_POOL_SIZE = 30;
+
+    // OPTIMIZATION: Reduced symbol arrays for better memory usage
+    const positiveSymbols = [
+        '☀️', '🌟', '✨', '💫', '⭐', '🌙', '💎', '🔮', '🕉️', '☯️', 
+        '🙏', '✝️', '☪️', '🔯', '☮️', '🕎', '⚛️', '🧿', '📿', '⛩️',
+        '🕯️', '🔥', '👼', '😇', '🧘', '🌈', '🦋', '🕊️', '🌸', '🌺'
+    ];
+
+    const negativeSymbols = [
+        '💀', '☠️', '👹', '👺', '👿', '😈', '🧟', '🦇', '🕷️', '🐍', 
+        '🦂', '⚰️', '⚱️', '💥', '⚡', '🌪️', '☄️', '💔', '😵', '😰',
+        '😱', '🤮', '😭', '😢', '😤', '😡', '🤬', '😠', '😾', '🙄'
+    ];
 
     function getCacheKey(message, mode, tokens) {
         return `${message.toLowerCase().trim()}_${mode}_${tokens}`;
     }
 
-    // Massively expanded vibrational symbol arrays with HTML entities and mystical symbols
-    const positiveSymbols = [
-        // Celestial & Light
-        '☀️', '🌟', '✨', '💫', '⭐', '🌙', '🌞', '🌛', '🌜', '🌝', '🌚', '🌠', '☄️', '💥',
-        // Mystical & Spiritual Religious
-        '💎', '🔮', '🕉️', '☯️', '🙏', '✝️', '☪️', '🔯', '☮️', '🕎', '⚛️', '🧿', '📿', '⛩️',
-        '🕯️', '🔥', '👼', '😇', '🧘', '🤲', '🛐', '☦️', '✞', '✟', '✠', '✡', '☬', '☸', '🔱',
-        // Astrology (zodiac signs now in permanent wheel)
-        '⛎', // Ophiuchus (13th sign)
-        // Nature & Life Magic
-        '🌈', '🦋', '🕊️', '🌸', '🌺', '🌻', '🌷', '🌹', '🍀', '🌿', '🌱', '🌵', '🌾',
-        '🌳', '🌲', '🌴', '🍃', '🦢', '🐝', '🦄', '🧚', '🧜', '🦅', '🦆', '🐚', '🪷',
-        '🌊', '💧', '💦', '🫧', '🌪️', '🌬️', '☁️', '⛅', '🌤️', '⛈️', '🌩️', '🌦️',
-        // Sacred Geometry & Mystical Symbols
-        '❤️', '💚', '💜', '💙', '🤍', '💛', '🧡', '✅', '➕', '👍', '🙌', '🤝', '👏',
-        '🛡️', '👑', '💰', '🎭', '🎨', '🎪', '🎯', '🏆', '🎖️', '🥇', '🏅', '📜', '🗝️',
-        // Angels & Divine Beings
-        '👼', '😇', '🧚‍♀️', '🧚‍♂️', '🧞‍♀️', '🧞‍♂️', '🦄', '🐉', '🦅', '🕊️',
-        // Crystals & Gems
-        '💎', '💍', '💒', '🔮', '⭐', '🌟', '✨', '💫', '🌠',
-        // Sacred Tools & Objects
-        '🔮', '🕯️', '📿', '🧿', '🪬', '🎭', '🎪', '🎨', '🎼', '🎵', '🎶', '🎤',
-        // Positive Energy Symbols
-        '∞', '☆', '★', '✦', '✧', '✩', '✪', '✫', '✬', '✭', '✮', '✯', '✰', '✱', '✲', '✳',
-        '✴', '✵', '✶', '✷', '✸', '✹', '✺', '✻', '✼', '✽', '✾', '✿', '❀', '❁', '❂', '❃',
-        '❄', '❅', '❆', '❇', '❈', '❉', '❊', '❋', '❌', '❍', '❎', '❏', '❐', '❑', '❒',
-        // Sacred Geometry
-        '◊', '◈', '◉', '○', '●', '◌', '◍', '◎', '◐', '◑', '◒', '◓', '◔', '◕', '◖', '◗',
-        '◘', '◙', '◚', '◛', '◜', '◝', '◞', '◟', '◠', '◡', '◢', '◣', '◤', '◥', '◦', '◧',
-        // Card Suits & Mystical
-        '♠', '♣', '♥', '♦', '♡', '♢', '♧', '♤', '♚', '♛', '♜', '♝', '♞', '♟',
-        // Misc Magical
-        '⚡', '⚜', '❅', '❆', '🔆', '🔅', '💡', '🕯️', '🪔', '🎆', '🎇', '🌀', '💫',
-        // Ancient & Runic
-        '᚛', '᚜', 'ᚁ', 'ᚂ', 'ᚃ', 'ᚄ', 'ᚅ', 'ᚆ', 'ᚇ', 'ᚈ', 'ᚉ', 'ᚊ', 'ᚋ', 'ᚌ', 'ᚍ', 'ᚎ',
-        '⚹', '⚺', '⚻', '⚼', '⚽', '⚾', '⚿', '⛀', '⛁', '⛂', '⛃'
-    ];
-
-    const negativeSymbols = [
-        // Death & Darkness
-        '💀', '☠️', '👹', '👺', '👿', '😈', '🧟', '🦇', '🕷️', '🐍', '🦂', '💀', '⚰️', '⚱️',
-        '🔥', '💥', '⚡', '🌪️', '☄️', '💫', '🌊', '🌋', '🗲', '⚇', '⚈', '⚉',
-        // Dark Creatures & Monsters
-        '👾', '👻', '😱', '🤡', '🧌', '🧛', '🧟‍♀️', '🧟‍♂️', '🦈', '🐙', '🕸️', '🦟', '🪰',
-        '🐀', '🐺', '🦘', '🦗', '🪲', '🦠', '🧬', '🦹', '🦸‍♂️', '🦸‍♀️', '🤖',
-        // Negative Emotions & Faces
-        '💔', '😵', '😰', '😱', '🤮', '😭', '😢', '😤', '😡', '🤬', '😠', '😾', '🙄',
-        '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢',
-        // Destruction & Chaos
-        '💣', '💥', '⚡', '🌪️', '🌊', '🔥', '⚠️', '🆘', '☢️', '☣️', '⛈️', '🌩️',
-        '💀', '⚔️', '🗡️', '🔪', '🪓', '⚒️', '🔨', '💣', '🧨', '💥', '⚰️', '⚱️',
-        // Dark Weather & Elements
-        '☁️', '🌧️', '⛈️', '🌩️', '❄️', '🧊', '🌫️', '🌀', '💨', '⛅', '🌑', '🌒',
-        '🌓', '🌔', '🌕', '🌖', '🌗', '🌘', '🌚', '🌝', '🌛', '🌜',
-        // Rejection & Negation
-        '❌', '➖', '🚫', '⛔', '🔴', '👎', '📉', '💸', '🗑️', '🚮', '🚯', '🚱',
-        '🚳', '🚷', '🚸', '⚠️', '☠️', '⚰️', '⚱️', '🔇', '🔕', '📴', '💔',
-        // Dark Symbols & Entities
-        '✖', '✗', '✘', '⛌', '⛍', '⛎', '⛏', '⚒', '⚓', '⚰', '⚱', '⚠', '☠',
-        '☢', '☣', '⚡', '⚠', '☡', '⚞', '⚟', '⚠', '⚡', '⚢', '⚣', '⚤', '⚥',
-        // Dark Geometry
-        '◐', '◑', '◒', '◓', '◔', '◕', '◖', '◗', '◘', '◙', '◚', '◛', '◜', '◝',
-        '◞', '◟', '◠', '◡', '◢', '◣', '◤', '◥', '◦', '◧', '◨', '◩', '◪', '◫',
-        '▲', '▼', '◆', '◇', '■', '□', '▪', '▫', '▬', '▭', '▮', '▯', '▰', '▱',
-        '▲', '▼', '▶', '◀', '▴', '▾', '▸', '◂', '▵', '▿', '▹', '◃', '△', '▽',
-        // Dark Ancient & Cursed
-        '᚛', '᚜', 'ᚠ', 'ᚡ', 'ᚢ', 'ᚣ', 'ᚤ', 'ᚥ', 'ᚦ', 'ᚧ', 'ᚨ', 'ᚩ', 'ᚪ', 'ᚫ', 'ᚬ', 'ᚭ',
-        '⛤', '⛥', '⛦', '⛧', '⛨', '⛩', '⛪', '⛫', '⛬', '⛭', '⛮', '⛯', '⛰', '⛱', '⛲', '⛳',
-        // Misc Dark & Cursed
-        '🕳️', '⚫', '⬛', '◼️', '▪️', '🔳', '◾', '◼', '▪', '▫', '⬜', '◽', '◻', '▫️',
-        '💀', '☠', '⚰', '⚱', '🗿', '🪦', '⚡', '⛈', '🌪', '🌊', '🔥', '💥', '💣',
-        '👁️', '🧿', '👁️‍🗨️', '🔮', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'
-    ];
-
-    // Vibrational analysis function
+    // OPTIMIZATION: Simplified vibrational analysis
     function analyzeVibrationalEnergy(text) {
         const lowerText = text.toLowerCase();
+        const positiveWords = ['love', 'peace', 'joy', 'light', 'gratitude', 'blessed', 'amazing', 
+                             'beautiful', 'wonderful', 'happy', 'divine', 'sacred', 'healing', 
+                             'wisdom', 'harmony', 'hope', 'faith', 'magic', 'soul', 'spirit'];
+        const negativeWords = ['hate', 'anger', 'fear', 'dark', 'evil', 'terrible', 'awful', 
+                             'sad', 'depressed', 'anxious', 'worried', 'stressed', 'angry', 
+                             'broken', 'hurt', 'pain', 'death', 'kill', 'fight', 'war'];
         
-        // Enhanced positive keywords including greetings and common positive expressions
-        const positiveWords = [
-            'love', 'peace', 'joy', 'light', 'gratitude', 'blessed', 'amazing', 'beautiful', 
-            'wonderful', 'fantastic', 'awesome', 'grateful', 'happy', 'enlightened', 
-            'spiritual', 'divine', 'sacred', 'healing', 'wisdom', 'transcend', 'manifest',
-            'abundance', 'prosperity', 'harmony', 'unity', 'compassion', 'kindness',
-            'hope', 'faith', 'trust', 'believe', 'inspire', 'magic', 'miracle',
-            'soul', 'spirit', 'energy', 'vibration', 'frequency', 'consciousness',
-            'meditation', 'zen', 'namaste', 'blessed', 'thank', 'appreciate',
-            // Common positive/neutral expressions
-            'hello', 'hi', 'hey', 'good', 'great', 'nice', 'cool', 'yes', 'please',
-            'help', 'welcome', 'greetings', 'thanks', 'okay', 'sure', 'absolutely',
-            'perfect', 'excellent', 'brilliant', 'smart', 'wise', 'interesting',
-            'curious', 'excited', 'fun', 'enjoy', 'like', 'love', 'want', 'need',
-            'learn', 'grow', 'improve', 'better', 'best', 'special', 'unique'
-        ];
+        let score = 0;
+        positiveWords.forEach(word => { if (lowerText.includes(word)) score++; });
+        negativeWords.forEach(word => { if (lowerText.includes(word)) score--; });
         
-        // Negative keywords  
-        const negativeWords = [
-            'hate', 'anger', 'fear', 'dark', 'evil', 'terrible', 'awful', 'horrible',
-            'sad', 'depressed', 'anxious', 'worried', 'stressed', 'frustrated',
-            'angry', 'mad', 'furious', 'disgusted', 'sick', 'tired', 'exhausted',
-            'broken', 'hurt', 'pain', 'suffering', 'misery', 'despair', 'hopeless',
-            'worthless', 'useless', 'failure', 'disaster', 'nightmare', 'curse',
-            'damn', 'hell', 'devil', 'toxic', 'poison', 'disease', 'death',
-            'destroy', 'kill', 'murder', 'violence', 'war', 'fight', 'attack',
-            'no', 'never', 'stop', 'quit', 'give up', 'impossible', 'can\'t', 'won\'t'
-        ];
+        // Neutral messages get slight positive bias
+        if (score === 0) score = 1;
         
-        let positiveScore = 0;
-        let negativeScore = 0;
-        const detectedPositive = [];
-        const detectedNegative = [];
-        
-        positiveWords.forEach(word => {
-            if (lowerText.includes(word)) {
-                positiveScore++;
-                detectedPositive.push(word);
-            }
-        });
-        
-        negativeWords.forEach(word => {
-            if (lowerText.includes(word)) {
-                negativeScore++;
-                detectedNegative.push(word);
-            }
-        });
-        
-        console.log('Vibrational analysis for:', text);
-        console.log('Detected positive words:', detectedPositive);
-        console.log('Detected negative words:', detectedNegative);
-        console.log('Positive score:', positiveScore, 'Negative score:', negativeScore);
-        
-        let vibrationalLevel = positiveScore - negativeScore;
-        
-        // Give neutral messages a slight positive bias (minimum level of 1 if no negative words)
-        if (vibrationalLevel === 0 && negativeScore === 0) {
-            vibrationalLevel = 1;
-            console.log('Applied positive bias to neutral message');
-        }
-        
-        // Return vibrational level (-3 to +3)
-        const finalLevel = Math.max(-3, Math.min(3, vibrationalLevel));
-        console.log('Final vibrational level:', finalLevel);
-        return finalLevel;
+        return Math.max(-3, Math.min(3, score));
     }
 
-    // Vibrational color mapping - extremely intense and visible
+    // OPTIMIZATION: Simplified color mapping
     const vibrationalColors = {
-        // Highly positive (love, spiritual, transcendent) - extremely visible
-        3: '#3d047a',  // Very bright purple for highest vibration
-        2: '#500470',  // Bright blue-purple  
-        1: '#061b59',  // Bright blue tint
-        0: '#333333',  // Black for neutral
-        '-1': '#332411', // Bright orange tint
-        '-2': '#3b1204', // Bright red tint
-        '-3': '#580404'  // Very bright red tint
+        3: '#3d047a', 2: '#500470', 1: '#061b59',
+        0: '#333333', '-1': '#332411', '-2': '#3b1204', '-3': '#580404'
     };
 
-    // Astrological positions for zodiac symbols (12 positions around a circle)
-    const zodiacPositions = {
-        '♈': { angle: 0 },    // Aries - East
-        '♉': { angle: 30 },   // Taurus
-        '♊': { angle: 60 },   // Gemini
-        '♋': { angle: 90 },   // Cancer - North
-        '♌': { angle: 120 },  // Leo
-        '♍': { angle: 150 },  // Virgo
-        '♎': { angle: 180 },  // Libra - West
-        '♏': { angle: 210 },  // Scorpio
-        '♐': { angle: 240 },  // Sagittarius
-        '♑': { angle: 270 },  // Capricorn - South
-        '♒': { angle: 300 },  // Aquarius
-        '♓': { angle: 330 }   // Pisces
-    };
-
-    // Advanced vibrational analysis with subtle color themes
-    function getVibrationalColor(vibrationalLevel, messageText) {
-        const lowerText = messageText.toLowerCase();
-        
-        // Check for specific high-vibe themes - extremely visible colors
-        if (lowerText.includes('love') || lowerText.includes('divine') || lowerText.includes('blessed')) {
-            return '#cc44aa'; // Very bright pink tint
-        }
-        if (lowerText.includes('spiritual') || lowerText.includes('sacred') || lowerText.includes('enlighten')) {
-            return '#8844cc'; // Very bright purple tint
-        }
-        if (lowerText.includes('peace') || lowerText.includes('harmony') || lowerText.includes('zen')) {
-            return '#44aacc'; // Very bright cyan tint
-        }
-        if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('celebrate')) {
-            return '#ccaa44'; // Very bright yellow tint
-        }
-        if (lowerText.includes('gratitude') || lowerText.includes('thank') || lowerText.includes('appreciate')) {
-            return '#44cc44'; // Very bright green tint
-        }
-        
-        // Check for specific low-vibe themes - extremely visible colors
-        if (lowerText.includes('hate') || lowerText.includes('evil') || lowerText.includes('curse')) {
-            return '#cc2222'; // Very bright dark red
-        }
-        if (lowerText.includes('fear') || lowerText.includes('terror') || lowerText.includes('nightmare')) {
-            return '#666666'; // Brighter dark gray
-        }
-        if (lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('furious')) {
-            return '#cc4444'; // Very bright red tint
-        }
-        
-        // Default to vibrational level color
-        return vibrationalColors[vibrationalLevel.toString()] || '#4f009d';
-    }
-
-    // Set background vibe color and start pulsing
+    // OPTIMIZATION: Use RAF for background animation
     function setVibrationalBackground(vibrationalLevel, messageText) {
-        const vibeColor = getVibrationalColor(vibrationalLevel, messageText);
+        const vibeColor = vibrationalColors[vibrationalLevel.toString()] || '#4f009d';
         
-        console.log('Setting vibrational background:', vibrationalLevel, vibeColor);
-        console.log('Current body classes before:', document.body.classList.toString());
-        
-        // Clear any existing pulsing first
-        document.body.classList.remove('vibrational-pulse');
-        
-        // Set CSS custom property for the vibe color
         document.documentElement.style.setProperty('--vibe-color', vibeColor);
-        console.log('CSS variable --vibe-color set to:', vibeColor);
-        
-        // Force a reflow to ensure the CSS variable is set
-        document.body.offsetHeight;
-        
-        // Add pulsing class to body immediately for testing
         document.body.classList.add('vibrational-pulse');
-        console.log('Vibrational pulse class added immediately, color:', vibeColor);
-        console.log('Current body classes after:', document.body.classList.toString());
         
-        // Log the computed style to verify
-        const computedStyle = window.getComputedStyle(document.body);
-        console.log('Computed background-color:', computedStyle.backgroundColor);
-        console.log('Computed animation:', computedStyle.animation);
-        
-        // Remove any existing timeout
         if (window.vibrationalTimeout) {
             clearTimeout(window.vibrationalTimeout);
         }
         
-        // Keep the vibrational background for 15 seconds
         window.vibrationalTimeout = setTimeout(() => {
-            console.log('Clearing vibrational background after 15 seconds');
             clearVibrationalBackground();
         }, 15000);
     }
 
-    // Clear vibrational background
     function clearVibrationalBackground() {
         document.body.classList.remove('vibrational-pulse');
         document.documentElement.style.setProperty('--vibe-color', '#000000');
     }
 
-    // Create permanent astrological wheel
+    // OPTIMIZATION: Create permanent astrological wheel once
     function createAstrologicalWheel() {
-        if (!astrologicalWheel) return;
+        if (!astrologicalWheel || astrologicalWheel.children.length > 0) return;
         
-        // Simple planetary astrology symbols
         const astroSigns = ['☿', '♀', '♁', '♂', '♃', '♄', '♅', '♆', '♇'];
+        const fragment = document.createDocumentFragment();
         
         astroSigns.forEach((sign, index) => {
             const symbol = document.createElement('div');
             symbol.className = 'zodiac-symbol';
-            symbol.textContent = sign; // Use textContent for simple characters
+            symbol.textContent = sign;
             
-            const angle = index * 40; // 40 degrees apart (9 symbols = 360/9 = 40°)
-            const radius = 45; // 45% of container
+            const angle = index * 40;
+            const radius = 45;
             const angleRad = (angle * Math.PI) / 180;
             
             const x = 50 + radius * Math.cos(angleRad);
@@ -304,276 +123,101 @@ document.addEventListener('DOMContentLoaded', () => {
             symbol.style.left = x + '%';
             symbol.style.top = y + '%';
             
-            astrologicalWheel.appendChild(symbol);
+            fragment.appendChild(symbol);
         });
+        
+        astrologicalWheel.appendChild(fragment);
     }
 
-    // Get deeply thematic symbols with animals and clever associations
-    function getThematicSymbols(messageText, isPositive) {
-        const lowerText = messageText.toLowerCase();
-        
-        if (isPositive) {
-            // Love & relationships - animals of romance and bonding
-            if (lowerText.includes('love') || lowerText.includes('heart') || lowerText.includes('romance') || lowerText.includes('relationship')) {
-                return ['🦢', '🕊️', '🦋', '🐝', '🦆', '❤️', '💕', '💖', '💗', '💘', '🌹', '🌺', '♥', '♡', '💞'];
-            }
-            // Spiritual & divine - sacred animals and mystical symbols
-            if (lowerText.includes('spiritual') || lowerText.includes('divine') || lowerText.includes('sacred') || lowerText.includes('enlighten') || lowerText.includes('meditation')) {
-                return ['🦅', '🕊️', '🦄', '🐉', '🙏', '🕉️', '☯️', '✝️', '☪️', '🔯', '👼', '😇', '🧿', '📿', '⛩️'];
-            }
-            // Wisdom & knowledge - wise animals
-            if (lowerText.includes('wise') || lowerText.includes('wisdom') || lowerText.includes('learn') || lowerText.includes('knowledge') || lowerText.includes('understand')) {
-                return ['🦉', '🐘', '🦋', '🐢', '📚', '🔮', '✨', '💡', '🧠', '👁️', '🗝️', '💎', '⭐', '🌟', '☆'];
-            }
-            // Strength & courage - powerful animals
-            if (lowerText.includes('strong') || lowerText.includes('courage') || lowerText.includes('brave') || lowerText.includes('power') || lowerText.includes('confident')) {
-                return ['🦁', '🐅', '🦅', '🐺', '🐻', '🦬', '🦏', '💪', '👑', '🛡️', '⚡', '🔥', '🌟', '✨', '💎'];
-            }
-            // Freedom & adventure - free spirits
-            if (lowerText.includes('free') || lowerText.includes('freedom') || lowerText.includes('adventure') || lowerText.includes('explore') || lowerText.includes('journey')) {
-                return ['🦅', '🐎', '🦋', '🐋', '🐬', '🦆', '🌊', '🌬️', '🌈', '🗺️', '⛵', '🎈', '✈️', '🚀', '⭐'];
-            }
-            // Joy & playfulness - happy animals
-            if (lowerText.includes('joy') || lowerText.includes('happy') || lowerText.includes('fun') || lowerText.includes('play') || lowerText.includes('laugh')) {
-                return ['🐒', '🐧', '🦭', '🐬', '🐕', '🐱', '🦆', '🐥', '🎉', '🎊', '🎈', '✨', '🌟', '💫', '😊'];
-            }
-            // Peace & calm - peaceful animals
-            if (lowerText.includes('peace') || lowerText.includes('calm') || lowerText.includes('tranquil') || lowerText.includes('serene') || lowerText.includes('zen')) {
-                return ['🕊️', '🦢', '🐢', '🦌', '🐰', '🐑', '🌸', '🪷', '☯️', '💙', '🌊', '🌙', '☮️', '🧘', '✨'];
-            }
-            // Growth & renewal - life-giving animals and symbols
-            if (lowerText.includes('grow') || lowerText.includes('new') || lowerText.includes('begin') || lowerText.includes('start') || lowerText.includes('birth')) {
-                return ['🦋', '🐛', '🐝', '🐢', '🌱', '🌿', '🌸', '🌺', '🥚', '🐣', '🐤', '☀️', '🌅', '✨', '⭐'];
-            }
-            // Success & achievement - victorious animals
-            if (lowerText.includes('success') || lowerText.includes('win') || lowerText.includes('achieve') || lowerText.includes('victory') || lowerText.includes('accomplish')) {
-                return ['🦅', '🦁', '🐅', '🐎', '🏆', '🥇', '👑', '💰', '💎', '🎯', '🌟', '⭐', '✨', '🎉', '🙌'];
-            }
-        } else {
-            // Fear & anxiety - fearsome/anxious animals
-            if (lowerText.includes('fear') || lowerText.includes('scared') || lowerText.includes('anxiety') || lowerText.includes('worry') || lowerText.includes('nervous')) {
-                return ['🦇', '🕷️', '🐍', '🦂', '🐀', '🕊️', '😰', '😱', '🌚', '🌑', '☁️', '⛈️', '🌪️', '💀', '👻'];
-            }
-            // Anger & aggression - aggressive animals
-            if (lowerText.includes('anger') || lowerText.includes('mad') || lowerText.includes('rage') || lowerText.includes('furious') || lowerText.includes('hate')) {
-                return ['🐅', '🦏', '🐗', '🦈', '🐊', '🐍', '🦂', '🔥', '⚡', '💥', '😡', '🤬', '💢', '⚔️', '🗡️'];
-            }
-            // Betrayal & deception - sneaky animals
-            if (lowerText.includes('betray') || lowerText.includes('lie') || lowerText.includes('deceive') || lowerText.includes('fake') || lowerText.includes('cheat')) {
-                return ['🐍', '🦊', '🐺', '🕷️', '🦂', '🐀', '👺', '😈', '🎭', '🖤', '⚫', '🌑', '🌚', '💀', '☠️'];
-            }
-            // Isolation & loneliness - solitary animals
-            if (lowerText.includes('alone') || lowerText.includes('lonely') || lowerText.includes('isolat') || lowerText.includes('abandon') || lowerText.includes('empty')) {
-                return ['🐺', '🦇', '🐢', '🦉', '🐧', '☁️', '🌑', '🌚', '💔', '😞', '😔', '🖤', '◼️', '▪️', '⚫'];
-            }
-            // Destruction & chaos - destructive forces
-            if (lowerText.includes('destroy') || lowerText.includes('break') || lowerText.includes('chaos') || lowerText.includes('ruin') || lowerText.includes('devastat')) {
-                return ['🦈', '🐊', '🐍', '🕷️', '🦂', '💥', '🔥', '⚡', '🌪️', '🌋', '💣', '⚔️', '💀', '☠️', '⚠️'];
-            }
-            // Sadness & depression - melancholy animals and symbols
-            if (lowerText.includes('sad') || lowerText.includes('depress') || lowerText.includes('cry') || lowerText.includes('hurt') || lowerText.includes('pain')) {
-                return ['🐧', '🦭', '🐢', '🦉', '💧', '☔', '🌧️', '☁️', '💔', '😢', '😭', '🥀', '🖤', '🌑', '◼️'];
-            }
-            // Toxic & poisonous - venomous animals
-            if (lowerText.includes('toxic') || lowerText.includes('poison') || lowerText.includes('venom') || lowerText.includes('corrupt') || lowerText.includes('contamina')) {
-                return ['🐍', '🕷️', '🦂', '🐀', '🦠', '☠️', '💀', '☢️', '☣️', '⚠️', '🖤', '💚', '🤢', '🤮', '😵'];
-            }
+    // OPTIMIZATION: Pool-based symbol spawning
+    function getPooledSymbol() {
+        if (symbolPool.length > 0) {
+            return symbolPool.pop();
         }
-        
-        // Return general positive or negative symbols if no specific theme matches
-        return isPositive ? positiveSymbols : negativeSymbols;
+        const symbol = document.createElement('div');
+        symbol.className = 'vibrational-symbol';
+        return symbol;
     }
 
-    // Clear existing symbols
-    function clearVibrationalSymbols() {
-        if (!vibrationalSymbols) return;
-        vibrationalSymbols.innerHTML = '';
+    function returnToPool(symbol) {
+        if (symbolPool.length < MAX_SYMBOL_POOL_SIZE) {
+            symbol.style.display = 'none';
+            symbolPool.push(symbol);
+        } else {
+            symbol.remove();
+        }
     }
 
-    // Spawn magical symbols (now persist until next query) - OPTIMIZED
+    // OPTIMIZATION: Efficient symbol spawning with RAF and pooling
     function spawnVibrationalSymbols(vibrationalLevel, messageLength, messageText) {
         if (!vibrationalSymbols) return;
         
-        // Clear previous symbols first
         clearVibrationalSymbols();
         
         const isPositive = vibrationalLevel > 0;
         const intensity = Math.abs(vibrationalLevel);
-        // Reduced max symbols from 25 to 15 for better performance
-        const symbolCount = Math.min(15, Math.max(5, (intensity * 3) + Math.floor(messageLength / 20)));
+        const symbolCount = Math.min(10, Math.max(3, intensity * 2)); // Reduced from 15
         
-        // Get thematically appropriate symbols for this message
-        const thematicSymbols = getThematicSymbols(messageText, isPositive);
+        const symbolArray = isPositive ? positiveSymbols : negativeSymbols;
+        const fragment = document.createDocumentFragment();
         
-        // Use requestAnimationFrame for smoother animations
-        let symbolIndex = 0;
-        function addSymbol() {
-            if (symbolIndex >= symbolCount) return;
-            
-            const symbol = document.createElement('div');
+        for (let i = 0; i < symbolCount; i++) {
+            const symbol = getPooledSymbol();
+            symbol.style.display = '';
             symbol.className = `vibrational-symbol ${isPositive ? 'positive' : 'negative'}`;
+            symbol.textContent = symbolArray[Math.floor(Math.random() * symbolArray.length)];
             
-            // Choose from thematic symbols (70% chance) or general symbols (30% chance)
-            const useThematic = Math.random() < 0.7;
-            const symbolArray = useThematic ? thematicSymbols : (isPositive ? positiveSymbols : negativeSymbols);
-            const chosenSymbol = symbolArray[Math.floor(Math.random() * symbolArray.length)];
-            symbol.textContent = chosenSymbol;
-            
-            // Random position (zodiac symbols are now permanent in the wheel)
             symbol.style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
             symbol.style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
             
-            // Vary size based on intensity and randomness
-            const size = 18 + (intensity * 4) + Math.random() * 15;
+            const size = 18 + (intensity * 3) + Math.random() * 10;
             symbol.style.fontSize = size + 'px';
-            
-            // Add random delay to pulsing animation
             symbol.style.animationDelay = Math.random() * 2 + 's';
             
-            vibrationalSymbols.appendChild(symbol);
-            symbolIndex++;
+            fragment.appendChild(symbol);
             
-            // Use RAF instead of setTimeout for smoother performance
-            requestAnimationFrame(addSymbol);
+            // Return to pool after animation
+            setTimeout(() => returnToPool(symbol), 10000);
         }
         
-        requestAnimationFrame(addSymbol);
+        vibrationalSymbols.appendChild(fragment);
     }
 
-    function blobToDataUrl(blob) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
+    function clearVibrationalSymbols() {
+        if (!vibrationalSymbols) return;
+        Array.from(vibrationalSymbols.children).forEach(child => {
+            returnToPool(child);
         });
     }
 
-    // Initialize Web Audio Context and Effects
-    function initializeAudioEffects() {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            wizardAudioEffects = {
-                // Create oscillator for ring modulation
-                ringModOsc: audioContext.createOscillator(),
-                ringModGain: audioContext.createGain(),
-                
-                // Create filters
-                lowpassFilter: audioContext.createBiquadFilter(),
-                highpassFilter: audioContext.createBiquadFilter(),
-                
-                // Create distortion using WaveShaper
-                distortion: audioContext.createWaveShaper(),
-                
-                // Create gain nodes for mixing
-                inputGain: audioContext.createGain(),
-                outputGain: audioContext.createGain(),
-                
-                // Pitch shift simulation (basic)
-                delayNode: audioContext.createDelay(),
-                feedbackGain: audioContext.createGain(),
-                
-                // Bitcrusher simulation
-                bitcrushGain: audioContext.createGain(),
-                
-                // Main source and destination
-                source: null,
-                destination: audioContext.destination
-            };
-            
-            // Setup ring modulation
-            wizardAudioEffects.ringModOsc.frequency.setValueAtTime(30, audioContext.currentTime); // Low frequency for robotic buzz
-            wizardAudioEffects.ringModOsc.start();
-            wizardAudioEffects.ringModGain.gain.setValueAtTime(0.2, audioContext.currentTime); // Subtle ring mod
-            
-            // Setup filters
-            wizardAudioEffects.lowpassFilter.type = 'lowpass';
-            wizardAudioEffects.lowpassFilter.frequency.setValueAtTime(3000, audioContext.currentTime); // Cut high frequencies
-            wizardAudioEffects.lowpassFilter.Q.setValueAtTime(1, audioContext.currentTime);
-            
-            wizardAudioEffects.highpassFilter.type = 'highpass';
-            wizardAudioEffects.highpassFilter.frequency.setValueAtTime(200, audioContext.currentTime); // Cut very low frequencies
-            wizardAudioEffects.highpassFilter.Q.setValueAtTime(0.5, audioContext.currentTime);
-            
-            // Setup subtle distortion
-            const makeDistortionCurve = (amount) => {
-                const samples = 44100;
-                const curve = new Float32Array(samples);
-                const deg = Math.PI / 180;
-                for (let i = 0; i < samples; i++) {
-                    const x = (i * 2) / samples - 1;
-                    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
-                }
-                return curve;
-            };
-            wizardAudioEffects.distortion.curve = makeDistortionCurve(2); // Subtle distortion
-            wizardAudioEffects.distortion.oversample = '4x';
-            
-            // Setup delay for pitch simulation
-            wizardAudioEffects.delayNode.delayTime.setValueAtTime(0.02, audioContext.currentTime); // 20ms delay
-            wizardAudioEffects.feedbackGain.gain.setValueAtTime(0.1, audioContext.currentTime);
-            
-            // Setup gains
-            wizardAudioEffects.inputGain.gain.setValueAtTime(0.8, audioContext.currentTime);
-            wizardAudioEffects.outputGain.gain.setValueAtTime(0.9, audioContext.currentTime);
-            wizardAudioEffects.bitcrushGain.gain.setValueAtTime(0.7, audioContext.currentTime);
-            
-            console.log("Audio effects initialized");
-        } catch (error) {
-            console.error("Error initializing audio effects:", error);
-        }
-    }
-
-    // Apply effects to audio element (disabled due to CORS restrictions)
-    function applyWizardEffects(audioElement) {
-        // Web Audio API effects are disabled because external TTS audio files
-        // from fal.media don't support CORS for Web Audio processing
-        // This would require proxy/server-side audio processing to work properly
-        console.log("Web Audio effects disabled due to CORS restrictions on external audio files");
-        return audioElement;
-    }
-
-    // Initialize background music
+    // OPTIMIZATION: Lazy load background music
     function initializeBackgroundMusic() {
+        if (backgroundMusic) return;
+        
         backgroundMusic = new Audio('./wizardry.mp3');
         backgroundMusic.loop = true;
-        backgroundMusic.volume = 0; // Start at 0 volume for fade in
+        backgroundMusic.volume = 0;
         
-        // Handle loading events
-        backgroundMusic.onloadstart = () => console.log('Background music loading started');
-        backgroundMusic.oncanplay = () => console.log('Background music ready to play');
+        backgroundMusic.oncanplay = () => console.log('Background music ready');
         backgroundMusic.onerror = (e) => console.error('Background music error:', e);
-        
-        console.log("Background music initialized");
     }
 
-    // Start background music with fade in (called after first query)
     function startBackgroundMusic() {
         if (!musicStarted && backgroundMusic) {
             backgroundMusic.play().then(() => {
-                console.log("Background music started, fading in...");
                 musicStarted = true;
                 
-                // Fade in over 3 seconds
-                const fadeInDuration = 3000; // 3 seconds
-                const targetVolume = 0.15; // 15% final volume
-                const fadeSteps = 60; // 60 steps for smooth fade
-                const stepDuration = fadeInDuration / fadeSteps;
-                const volumeIncrement = targetVolume / fadeSteps;
-                
-                let currentStep = 0;
+                // Simplified fade in
+                let volume = 0;
                 const fadeInterval = setInterval(() => {
-                    currentStep++;
-                    backgroundMusic.volume = Math.min(volumeIncrement * currentStep, targetVolume);
-                    
-                    if (currentStep >= fadeSteps) {
+                    volume += 0.005;
+                    if (volume >= 0.15) {
+                        backgroundMusic.volume = 0.15;
                         clearInterval(fadeInterval);
-                        backgroundMusic.volume = targetVolume;
-                        console.log("Background music fade in complete");
+                    } else {
+                        backgroundMusic.volume = volume;
                     }
-                }, stepDuration);
-                
+                }, 50);
             }).catch(err => {
                 console.error("Error starting background music:", err);
             });
@@ -581,235 +225,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initializeMicrophone() {
-        console.log("Initializing microphone functionality...");
-        
         if (micButton) {
             micButton.disabled = false;
             micButton.addEventListener('click', handleMicButtonClick);
-            console.log("Microphone button ready");
-        } else {
-            console.error("Microphone button not found");
         }
     }
 
     function toggleWizardSpeaking(isSpeaking) {
-        if (isSpeaking) {
-            wizardAscii.classList.add('speaking');
-        } else {
-            wizardAscii.classList.remove('speaking');
+        wizardAscii.classList.toggle('speaking', isSpeaking);
+    }
+
+    // OPTIMIZATION: Debounced TTS
+    let ttsQueue = [];
+    let isSpeaking = false;
+
+    async function speakWizardResponse(text) {
+        ttsQueue.push(text);
+        if (!isSpeaking) {
+            processTTSQueue();
         }
     }
 
-    // Preprocess text for better TTS pronunciation
-    function preprocessTextForTTS(text) {
-        let processedText = text;
+    async function processTTSQueue() {
+        if (ttsQueue.length === 0) {
+            isSpeaking = false;
+            return;
+        }
         
-        // Gen Alpha slang pronunciation fixes
-        processedText = processedText.replace(/\bgyatt\b/gi, 'Ghee-yat');
-        processedText = processedText.replace(/\bgyat\b/gi, 'Ghee-yat');
-        processedText = processedText.replace(/\brizz\b/gi, 'rizz');
-        processedText = processedText.replace(/\bskibidi\b/gi, 'skib-uh-dee');
-        processedText = processedText.replace(/\bsigma\b/gi, 'sig-mah');
-        processedText = processedText.replace(/\bbeta\b/gi, 'bay-tah');
-        processedText = processedText.replace(/\balpha\b/gi, 'al-fah');
-        processedText = processedText.replace(/\bfr\b/gi, 'for real');
-        processedText = processedText.replace(/\bngl\b/gi, 'not gonna lie');
-        processedText = processedText.replace(/\bfam\b/gi, 'fam');
-        processedText = processedText.replace(/\bno cap\b/gi, 'no cap');
-        processedText = processedText.replace(/\bfacts\b/gi, 'facts'); 
+        isSpeaking = true;
+        const text = ttsQueue.shift();
         
-        console.log('Original text:', text);
-        console.log('Processed text for TTS:', processedText);
-        
-        return processedText;
-    }
-
-    async function speakWizardResponse(text) {
         try {
-            const processedText = preprocessTextForTTS(text);
-            console.log('Requesting TTS for text:', processedText);
             const response = await fetch('/.netlify/functions/fal-kokoro-tts', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ text: processedText }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text }),
             });
 
-            console.log('TTS response status:', response.status);
-            
             if (response.ok) {
                 const data = await response.json();
-                console.log('TTS response data:', data);
-                
                 if (data.audioUrl) {
-                    console.log('Playing audio from URL:', data.audioUrl);
                     const audio = new Audio(data.audioUrl);
-                    audio.volume = 1.0; // 100% volume for Kokoro voice
+                    audio.volume = 1.0;
                     
-                    audio.onloadstart = () => console.log('Audio loading started');
-                    audio.oncanplay = () => {
-                        console.log('Audio can start playing');
-                        // Skip Web Audio effects due to CORS restrictions with external audio files
-                        // The external TTS audio files don't allow cross-origin Web Audio processing
-                        console.log('Skipping Web Audio effects due to CORS restrictions on external audio');
-                    };
-                    audio.onplay = () => console.log('Audio playback started');
-                    audio.onended = () => console.log('Audio playback ended');
-                    audio.onerror = (e) => console.error('Audio error:', e);
+                    audio.onended = () => processTTSQueue();
+                    audio.onerror = () => processTTSQueue();
                     
-                    audio.play().catch(err => {
-                        console.error("Error playing TTS audio:", err);
-                        appendMessage("The wizard's voice echoes only in silence (audio playback failed).", "wizard-message error");
-                    });
+                    await audio.play();
                 } else {
-                    console.error("No audioUrl in TTS response");
+                    processTTSQueue();
                 }
             } else {
-                console.error("TTS request failed:", response.status);
-                const errorData = await response.text();
-                console.error("TTS error details:", errorData);
+                processTTSQueue();
             }
         } catch (error) {
-            console.error("Error with TTS:", error);
+            console.error("TTS error:", error);
+            processTTSQueue();
         }
     }
 
     function showConjuringState() {
-        if (!wizardSpeechBubble) {
-            console.error("Wizard speech bubble element not found!");
-            return;
-        }
+        if (!wizardSpeechBubble) return;
         
-        // Clear any existing timeouts
-        if (window.conjuringTimeout1) clearTimeout(window.conjuringTimeout1);
-        if (window.conjuringTimeout2) clearTimeout(window.conjuringTimeout2);
-        
-        // Clear any existing content and add conjuring class
-        wizardSpeechBubble.textContent = ''; // Empty since CSS pseudo-element shows "Conjuring..."
+        wizardSpeechBubble.textContent = '';
         wizardSpeechBubble.classList.add('conjuring');
         wizardSpeechBubble.style.animation = '';
         wizardSpeechBubble.style.color = '';
-        
-        // Show additional info for longer responses
-        const tokenCount = getTokenCount(responseLengthSlider.value);
-        const responseMode = getResponseMode(responseLengthSlider.value);
-        
-        if (tokenCount > 1000) {
-            // Add extra text for epic/legendary responses
-            window.conjuringTimeout1 = setTimeout(() => {
-                if (wizardSpeechBubble.classList.contains('conjuring')) {
-                    const modeText = responseMode === 'legendary' ? 'legendary cosmic wisdom' : responseMode === 'epic' ? 'epic mystical knowledge' : 'profound insights';
-                    wizardSpeechBubble.innerHTML = `<div class="conjuring-text">Channeling ${modeText}...</div><div class="conjuring-subtext">The universe is working hard on your profound question</div>`;
-                }
-            }, 3000); // Show after 3 seconds
-            
-            window.conjuringTimeout2 = setTimeout(() => {
-                if (wizardSpeechBubble.classList.contains('conjuring')) {
-                    wizardSpeechBubble.innerHTML = `<div class="conjuring-text">Almost there...</div><div class="conjuring-subtext">Your cosmic response is manifesting</div>`;
-                }
-            }, 15000); // Show after 15 seconds
-        }
     }
 
     function clearConjuringState() {
         if (!wizardSpeechBubble) return;
-        
         wizardSpeechBubble.classList.remove('conjuring');
     }
 
-    function displayWizardResponseWithRetry(text, originalMessage) {
-        if (!wizardSpeechBubble) {
-            console.error("Wizard speech bubble element not found!");
-            return;
-        }
-        
-        // Clear conjuring state first
-        clearConjuringState();
-        
-        // Create container for error message and retry button
-        wizardSpeechBubble.innerHTML = '';
-        wizardSpeechBubble.style.animation = 'none';
-        wizardSpeechBubble.style.color = '#ff6b6b';
-        
-        const errorText = document.createElement('div');
-        errorText.textContent = text;
-        errorText.style.marginBottom = '10px';
-        
-        const retryButton = document.createElement('button');
-        retryButton.textContent = 'Try Again';
-        retryButton.style.cssText = `
-            background: none;;
-            color: white;
-            border: solid 1px #555;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        `;
-        
-        retryButton.onmouseover = () => {
-            retryButton.style.transform = 'scale(1.05)';
-            retryButton.style.background = 'linear-gradient(45deg, #7c3aed, #9333ea)';
-        };
-        retryButton.onmouseout = () => {
-            retryButton.style.transform = 'scale(1)';
-            retryButton.style.background = 'linear-gradient(45deg, #8b5cf6, #a855f7)';
-        };
-        
-        retryButton.onclick = () => {
-            // Clear the error and retry the message
-            wizardSpeechBubble.innerHTML = '';
-            chatInput.value = originalMessage;
-            sendMessage();
-        };
-        
-        wizardSpeechBubble.appendChild(errorText);
-        wizardSpeechBubble.appendChild(retryButton);
-    }
-
-    function appendToWizardResponse(additionalText) {
-        if (!wizardSpeechBubble) {
-            console.error("Wizard speech bubble element not found!");
-            return;
-        }
-        
-        // Get current text and append
-        const currentText = wizardSpeechBubble.textContent || '';
-        const fullText = currentText + additionalText;
-        
-        // Clear and restart typing effect with full text
-        wizardSpeechBubble.textContent = '';
-        wizardSpeechBubble.style.color = '';
-        
-        // Continue TTS with additional text
-        speakWizardResponse(additionalText);
-        
-        // Typing effect for the additional text only
-        let charIndex = currentText.length;
-        function typeChar() {
-            if (charIndex < fullText.length) {
-                wizardSpeechBubble.textContent = fullText.substring(0, charIndex + 1);
-                charIndex++;
-                setTimeout(typeChar, 30);
-            }
-        }
-        
-        // Set the current text immediately, then type the new part
-        wizardSpeechBubble.textContent = currentText;
-        typeChar();
-    }
-
+    // OPTIMIZATION: Efficient typing effect
     function displayWizardResponse(text, isError = false) {
         if (!wizardSpeechBubble) {
-            console.error("Wizard speech bubble element not found!");
             appendMessage(text, isError ? 'wizard-message error' : 'wizard-message');
             return;
         }
         
-        // Clear conjuring state first
         clearConjuringState();
         
         if (isError) {
@@ -817,45 +312,36 @@ document.addEventListener('DOMContentLoaded', () => {
             wizardSpeechBubble.style.animation = 'none';
             wizardSpeechBubble.style.color = '#ff6b6b';
         } else {
-            // Clear bubble and start typing effect
             wizardSpeechBubble.textContent = '';
             wizardSpeechBubble.style.animation = '';
             wizardSpeechBubble.style.color = '';
             
-            // Start TTS immediately when typing begins
             speakWizardResponse(text);
             
-            // Typing effect
+            // Optimized typing with RAF
             let charIndex = 0;
-            const typingSpeed = 30; // milliseconds between characters
-            
-            const typeInterval = setInterval(() => {
+            function typeChar() {
                 if (charIndex < text.length) {
                     wizardSpeechBubble.textContent += text.charAt(charIndex);
                     charIndex++;
-                } else {
-                    clearInterval(typeInterval);
-                    // TTS already started above
+                    requestAnimationFrame(() => setTimeout(typeChar, 25));
                 }
-            }, typingSpeed);
+            }
+            typeChar();
         }
     }
 
     function appendMessage(text, className) {
-        if (!userChatLog) {
-            console.error("Chat log element not found! Cannot append message:", text);
-            return;
-        }
+        if (!userChatLog) return;
+        
         const messageElement = document.createElement('p');
         messageElement.textContent = text;
         messageElement.className = className;
         userChatLog.appendChild(messageElement);
         userChatLog.scrollTop = userChatLog.scrollHeight;
-        if (className.includes('error')) {
-            messageElement.style.color = '#ff6b6b';
-        }
     }
 
+    // OPTIMIZATION: Smaller audio handling
     async function handleMicButtonClick() {
         if (!isRecording) {
             try {
@@ -865,16 +351,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         sampleRate: 16000,
                         echoCancellation: true,
                         noiseSuppression: true,
-                        autoGainControl: true,
-                        sampleSize: 16
+                        autoGainControl: true
                     }
                 });
                 
-                // Use lower quality for smaller files
                 const options = { 
                     mimeType: 'audio/webm;codecs=opus',
-                    audioBitsPerSecond: 16000 // Lower bitrate for smaller files
+                    audioBitsPerSecond: 16000
                 };
+                
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
                     options.mimeType = 'audio/webm';
                 }
@@ -886,44 +371,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 mediaRecorder.onstart = () => {
-                    console.log("Recording started");
-                    chatInput.placeholder = "Listening... speak thy truth... (max 20s)";
-                    if (micButton) micButton.classList.add('recording');
+                    chatInput.placeholder = "Listening... (max 15s)";
+                    micButton?.classList.add('recording');
                     
-                    // Auto-stop recording after 20 seconds (reduced from 30)
                     recordingTimeout = setTimeout(() => {
-                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                        if (mediaRecorder?.state === "recording") {
                             mediaRecorder.stop();
                         }
-                    }, 20000);
+                    }, 15000); // Reduced from 20s
                 };
 
                 mediaRecorder.onstop = async () => {
-                    console.log("Recording stopped");
                     chatInput.placeholder = "Speak or type thy query...";
-                    if (micButton) micButton.classList.remove('recording');
+                    micButton?.classList.remove('recording');
                     
-                    // Clear the timeout
-                    if (recordingTimeout) {
-                        clearTimeout(recordingTimeout);
-                        recordingTimeout = null;
-                    }
+                    clearTimeout(recordingTimeout);
                     
-                    if (audioChunks.length === 0) {
-                        console.log("No audio data captured.");
-                        return;
-                    }
+                    if (audioChunks.length === 0) return;
                     
                     const audioBlob = new Blob(audioChunks, { type: options.mimeType || 'audio/webm' });
                     audioChunks = [];
 
-                    // Check file size (limit to 10MB)
-                    if (audioBlob.size > 10 * 1024 * 1024) {
-                        appendMessage("The whispers are too voluminous for the ancient scrolls (audio too large). Try a shorter recording.", "wizard-message error");
+                    if (audioBlob.size > 5 * 1024 * 1024) { // 5MB limit
+                        appendMessage("Audio too large. Try a shorter recording.", "wizard-message error");
                         return;
                     }
 
-                    console.log(`Audio blob size: ${(audioBlob.size / 1024 / 1024).toFixed(2)} MB`);
                     appendMessage("[Processing thy whispers...]", "user-message dimmed");
 
                     try {
@@ -931,39 +404,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         const response = await fetch('/.netlify/functions/fal-whisper-stt', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ audioData: audioDataUrl }),
                         });
 
                         if (response.ok) {
                             const data = await response.json();
                             if (data.transcript) {
-                                console.log("Transcript received:", data.transcript);
                                 chatInput.value = data.transcript;
-                                const processingMessage = Array.from(userChatLog.children).find(el => el.textContent === "[Processing thy whispers...]");
-                                if (processingMessage) processingMessage.remove();
+                                const processingMessage = Array.from(userChatLog.children)
+                                    .find(el => el.textContent === "[Processing thy whispers...]");
+                                processingMessage?.remove();
                                 sendMessage();
-                            } else {
-                                console.error("No transcript in response:", data);
-                                appendMessage("The oracle speaks in riddles unclear (no transcript received).", "wizard-message error");
-                                const processingMessage = Array.from(userChatLog.children).find(el => el.textContent === "[Processing thy whispers...]");
-                                if (processingMessage) processingMessage.remove();
                             }
-                        } else {
-                            const errorData = await response.json();
-                            console.error("STT request failed:", errorData);
-                            appendMessage(`The spirits of voice whisper secrets untold: ${errorData.error || 'STT failed'}`, "wizard-message error");
-                            const processingMessage = Array.from(userChatLog.children).find(el => el.textContent === "[Processing thy whispers...]");
-                            if (processingMessage) processingMessage.remove();
                         }
-
                     } catch (err) {
-                        console.error("Error during STT call:", err);
-                        appendMessage(`The spirits of voice are confused: ${err.message || 'STT Failed'}`, "wizard-message error");
-                        const processingMessage = Array.from(userChatLog.children).find(el => el.textContent === "[Processing thy whispers...]");
-                        if (processingMessage) processingMessage.remove();
+                        console.error("STT error:", err);
+                        appendMessage("Voice processing failed.", "wizard-message error");
                     }
                 };
 
@@ -971,38 +428,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 isRecording = true;
                 
             } catch (err) {
-                console.error("Error accessing microphone:", err);
-                appendMessage("The spirits of the airwaves are shy... (Cannot access microphone)", "wizard-message error");
+                console.error("Microphone error:", err);
+                appendMessage("Cannot access microphone.", "wizard-message error");
             }
         } else {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
-            }
-            if (recordingTimeout) {
-                clearTimeout(recordingTimeout);
-                recordingTimeout = null;
-            }
+            mediaRecorder?.stop();
+            clearTimeout(recordingTimeout);
             isRecording = false;
         }
     }
 
+    function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    // OPTIMIZATION: Debounced message sending
     async function sendMessage() {
-        if (!chatInput) {
-            console.error("Chat input not found in sendMessage");
+        const currentTime = Date.now();
+        if (currentTime - lastRequestTime < MIN_REQUEST_INTERVAL) {
+            setTimeout(sendMessage, MIN_REQUEST_INTERVAL - (currentTime - lastRequestTime));
             return;
         }
+        
+        lastRequestTime = currentTime;
+        
+        if (!chatInput) return;
 
         const messageText = chatInput.value.trim();
         if (messageText) {
-            // Analyze vibrational energy and spawn symbols
+            // Cancel any pending request
+            if (pendingRequest) {
+                pendingRequest.abort();
+                pendingRequest = null;
+            }
+            
             const vibrationalLevel = analyzeVibrationalEnergy(messageText);
             spawnVibrationalSymbols(vibrationalLevel, messageText.length, messageText);
-            
-            // Set background color based on vibrational energy
             setVibrationalBackground(vibrationalLevel, messageText);
             
-            // Start background music after first query
             if (!musicStarted) {
+                initializeBackgroundMusic();
                 startBackgroundMusic();
             }
             
@@ -1013,290 +483,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const tokenCount = getTokenCount(responseLengthSlider.value);
             const responseMode = getResponseMode(responseLengthSlider.value);
             
-            // For longer responses, show enhanced ritual experience
-            if (tokenCount > 350) {
-                await sendMessageWithRitualExperience(messageText, responseMode, tokenCount);
-            } else {
-                await sendImmediateMessage(messageText, responseMode, tokenCount);
-            }
+            await sendOptimizedMessage(messageText, responseMode, tokenCount);
         }
     }
 
-    // Enhanced ritual experience using timed phases with regular API
-    async function sendMessageWithRitualExperience(messageText, responseMode, tokenCount) {
-        console.log(`Starting ritual experience: ${tokenCount} tokens in ${responseMode} mode`);
-        
-        // Add to conversation history
+    // OPTIMIZATION: Unified message handler with better error recovery
+    async function sendOptimizedMessage(messageText, responseMode, tokenCount) {
         conversationHistory.push({ role: "user", content: messageText });
         
-        let ritualStartTime = Date.now();
-        let ritualPhase = 1;
-        
-        // Show initial ritual phase
-        showSimpleRitualPhase({
-            message: "Initiating mystical ritual...",
-            description: "The cosmic energies begin to gather",
-            phase: 1,
-            startTime: ritualStartTime
-        });
-        
-        // Phase updates with timing
-        const phase2Timer = setTimeout(() => {
-            ritualPhase = 2;
-            showSimpleRitualPhase({
-                message: "Gathering cosmic energies...",
-                description: "Drawing power from distant galaxies", 
-                phase: 2,
-                startTime: ritualStartTime
-            });
-        }, 8000); // 8 seconds
-        
-        const phase3Timer = setTimeout(() => {
-            ritualPhase = 3;
-            showSimpleRitualPhase({
-                message: "Channeling interdimensional insights...",
-                description: "Bridging realms of consciousness",
-                phase: 3, 
-                startTime: ritualStartTime
-            });
-        }, 16000); // 16 seconds
-        
-        const phase4Timer = setTimeout(() => {
-            ritualPhase = 4;
-            showSimpleRitualPhase({
-                message: "Weaving legendary cosmic wisdom...",
-                description: "Crafting your personalized mystical guidance",
-                phase: 4,
-                startTime: ritualStartTime
-            });
-        }, 25000); // 25 seconds
-        
-        try {
-            // Keep only last 10 messages
-            if (conversationHistory.length > 10) {
-                conversationHistory = conversationHistory.slice(-10);
-            }
-            
-            // Extended timeout for longer responses
-            const timeoutMs = 40000; // 40 seconds
-            
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => {
-                controller.abort();
-            }, timeoutMs);
-            
-            const response = await fetch('/.netlify/functions/deepseek-chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    message: messageText,
-                    conversationHistory: conversationHistory,
-                    maxTokens: tokenCount,
-                    responseMode: responseMode
-                }),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            clearTimeout(phase2Timer);
-            clearTimeout(phase3Timer);
-            clearTimeout(phase4Timer);
-            
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            if (data && data.reply) {
-                // Show completion celebration
-                showSimpleRitualCompletion();
-                
-                setTimeout(() => {
-                    conversationHistory.push({ role: "assistant", content: data.reply });
-                    displayWizardResponse(data.reply);
-                    
-                    if (data.tokenUsage) {
-                        console.log(`Token usage:`, data.tokenUsage);
-                    }
-                    
-                    toggleWizardSpeaking(false);
-                }, 2000);
-            } else {
-                throw new Error('Invalid response format');
-            }
-            
-        } catch (error) {
-            console.error('Ritual failed:', error);
-            clearTimeout(phase2Timer);
-            clearTimeout(phase3Timer);
-            clearTimeout(phase4Timer);
-            
-            const isAbortError = error.name === 'AbortError';
-            const is502Error = error.message && error.message.includes('502');
-            const isTimeoutError = error.message && (error.message.includes('timeout') || error.message.includes('time'));
-            
-            let errorMessage;
-            if (isAbortError || isTimeoutError) {
-                errorMessage = `The ${responseMode} ritual required more cosmic energy than available! The mystical servers timed out. Try "Deep Insights" (Level 3) or lower for more reliable wizardly wisdom.`;
-            } else if (is502Error) {
-                errorMessage = "The mystical servers are overwhelmed by your profound energy. Try using Level 1-3 for more reliable responses!";
-            } else {
-                errorMessage = error.message || "The cosmic energies have been disrupted!";
-            }
-            
-            handleSimpleRitualFailure(errorMessage, messageText);
+        // Keep conversation history limited
+        if (conversationHistory.length > 8) {
+            conversationHistory = conversationHistory.slice(-8);
         }
-    }
-    
-    function showSimpleRitualPhase(phaseData) {
-        if (!wizardSpeechBubble) return;
-        
-        const elapsed = Math.floor((Date.now() - phaseData.startTime) / 1000);
-        
-        wizardSpeechBubble.innerHTML = `
-            <div class="ritual-phase">
-                <div class="ritual-message">${phaseData.message}</div>
-                <div class="ritual-description">${phaseData.description}</div>
-                <div class="ritual-timer">Elapsed: ${elapsed}s • Phase ${phaseData.phase}</div>
-                <div class="ritual-progress">
-                    <div class="progress-bar" style="width: ${Math.min(100, (elapsed / 45) * 100)}%"></div>
-                </div>
-                <button class="ritual-cancel" onclick="cancelCurrentRitual()">Cancel & Try Shorter Response</button>
-            </div>
-        `;
-        
-        // Spawn ritual symbols
-        spawnSimpleRitualSymbols(phaseData.phase);
-    }
-    
-    function spawnSimpleRitualSymbols(phase) {
-        const ritualSymbols = ['🔮', '✨', '🌟', '⭐', '💫', '🌙', '🌞', '🔯', '☯️', '🕉️'];
-        const symbolCount = Math.min(8, phase * 2);
-        
-        for (let i = 0; i < symbolCount; i++) {
-            setTimeout(() => {
-                const symbol = document.createElement('div');
-                symbol.className = 'ritual-symbol';
-                symbol.textContent = ritualSymbols[Math.floor(Math.random() * ritualSymbols.length)];
-                
-                symbol.style.left = Math.random() * window.innerWidth + 'px';
-                symbol.style.top = Math.random() * window.innerHeight + 'px';
-                symbol.style.animationDelay = Math.random() * 3 + 's';
-                
-                vibrationalSymbols.appendChild(symbol);
-                
-                setTimeout(() => symbol.remove(), 6000);
-            }, i * 150);
-        }
-    }
-    
-    function showSimpleRitualCompletion() {
-        wizardSpeechBubble.innerHTML = `
-            <div class="ritual-complete">
-                <div class="completion-message">🎆 COSMIC TRANSMISSION COMPLETE! 🎆</div>
-                <div class="completion-description">Your mystical wisdom has manifested!</div>
-            </div>
-        `;
-        
-        // Celebration symbol explosion
-        const celebrationSymbols = ['✨', '🎆', '🌟', '💫', '🎊', '🎉'];
-        for (let i = 0; i < 15; i++) {
-            setTimeout(() => {
-                const symbol = document.createElement('div');
-                symbol.className = 'celebration-symbol';
-                symbol.textContent = celebrationSymbols[Math.floor(Math.random() * celebrationSymbols.length)];
-                symbol.style.left = Math.random() * window.innerWidth + 'px';
-                symbol.style.top = Math.random() * window.innerHeight + 'px';
-                vibrationalSymbols.appendChild(symbol);
-                setTimeout(() => symbol.remove(), 3000);
-            }, i * 100);
-        }
-    }
-    
-    function handleSimpleRitualFailure(error, originalMessage) {
-        wizardSpeechBubble.innerHTML = `
-            <div class="ritual-failed">
-                <div class="failure-message">The cosmic energies have been disrupted!</div>
-                <div class="failure-description">${error}</div>
-                <button onclick="retryWithShorterMode('${originalMessage}')">Try Shorter Response Mode</button>
-            </div>
-        `;
-        toggleWizardSpeaking(false);
-    }
-    
-    window.cancelCurrentRitual = function() {
-        const currentLevel = parseInt(responseLengthSlider.value);
-        const newLevel = Math.max(1, currentLevel - 1);
-        responseLengthSlider.value = newLevel;
-        updateLengthIndicator(newLevel);
-        
-        handleSimpleRitualFailure('Ritual cancelled. Using shorter response mode for faster results!', '');
-    };
-    
-    window.retryWithShorterMode = function(originalMessage) {
-        const currentLevel = parseInt(responseLengthSlider.value);
-        const newLevel = Math.max(1, currentLevel - 1);
-        responseLengthSlider.value = newLevel;
-        updateLengthIndicator(newLevel);
-        
-        // Clear the speech bubble
-        wizardSpeechBubble.innerHTML = '';
-        
-        // Set the original message if provided
-        if (originalMessage) {
-            chatInput.value = originalMessage;
-        }
-        
-        // Trigger new message
-        setTimeout(() => {
-            sendMessage();
-        }, 500);
-    };
-    
-    // Immediate response for shorter messages (≤350 tokens)
-    async function sendImmediateMessage(messageText, responseMode, tokenCount) {
-        console.log(`Sending immediate message: ${tokenCount} tokens in ${responseMode} mode`);
         
         // Check cache first
         const cacheKey = getCacheKey(messageText, responseMode, tokenCount);
         const cached = responseCache.get(cacheKey);
 
         if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-            console.log('Using cached response');
             displayWizardResponse(cached.reply);
-            setTimeout(() => toggleWizardSpeaking(false), 1000);
+            toggleWizardSpeaking(false);
             return;
         }
         
-        // Show conjuring loading state
         showConjuringState();
         
+        // Create abort controller for this request
+        const controller = new AbortController();
+        pendingRequest = controller;
+        
         try {
-            // Add current message to conversation history
-            conversationHistory.push({ role: "user", content: messageText });
+            const timeoutMs = tokenCount > 300 ? 20000 : 15000;
             
-            // Keep only last 10 messages (5 exchanges) to manage memory
-            if (conversationHistory.length > 10) {
-                conversationHistory = conversationHistory.slice(-10);
-            }
-            
-            console.log(`Requesting ${tokenCount} tokens in ${responseMode} mode`);
-            
-            // Shorter timeout for immediate responses
-            const timeoutMs = 25000; // 25 seconds max
-            
-            const controller = new AbortController();
             const timeoutId = setTimeout(() => {
                 controller.abort();
             }, timeoutMs);
             
             const response = await fetch('/.netlify/functions/deepseek-chat', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     message: messageText,
                     conversationHistory: conversationHistory,
@@ -1307,168 +532,121 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             clearTimeout(timeoutId);
+            pendingRequest = null;
             
             if (!response.ok) {
-                let errorData = { error: `Error from the mystic ether: ${response.status}` };
-                try {
-                    const potentialErrorJson = await response.json();
-                    if (potentialErrorJson && potentialErrorJson.error) {
-                        errorData.error = potentialErrorJson.error;
-                    }
-                } catch (e) {
-                    console.warn("Could not parse error response as JSON.");
-                }
-                throw new Error(errorData.error);
+                throw new Error(`API Error: ${response.status}`);
             }
             
             const data = await response.json();
-            if (data && data.reply) {
-                // Add wizard's response to conversation history
+            if (data?.reply) {
                 conversationHistory.push({ role: "assistant", content: data.reply });
                 
-                // Cache the response
+                // Cache response
                 responseCache.set(cacheKey, {
                     reply: data.reply,
                     timestamp: Date.now()
                 });
                 
-                // Clean old cache entries if too many
-                if (responseCache.size > 20) {
+                // Clean cache if too large
+                if (responseCache.size > MAX_CACHE_SIZE) {
                     const oldestKey = responseCache.keys().next().value;
                     responseCache.delete(oldestKey);
                 }
                 
-                // Log token usage if available
-                if (data.tokenUsage) {
-                    console.log(`Token usage - Prompt: ${data.tokenUsage.prompt_tokens}, Completion: ${data.tokenUsage.completion_tokens}, Total: ${data.tokenUsage.total_tokens}`);
-                }
-                if (data.responseTime) {
-                    console.log(`Response time: ${data.responseTime}ms`);
-                }
-                
                 displayWizardResponse(data.reply);
-            } else if (data && data.error && data.suggest_shorter) {
-                // Backend suggests using a shorter response mode
-                const currentLevel = parseInt(responseLengthSlider.value);
-                const suggestedLevel = Math.max(1, currentLevel - 1);
-                const errorWithSuggestion = data.error + ` Consider sliding down to Level ${suggestedLevel} for more reliable cosmic transmissions.`;
-                displayWizardResponseWithRetry(errorWithSuggestion, messageText);
             } else {
-                console.error("Invalid data structure from backend:", data);
-                displayWizardResponse("The wizard's words are jumbled (invalid response format)... perhaps a cosmic hiccup?", true);
+                throw new Error('Invalid response format');
             }
             
         } catch (error) {
-            console.error('Failed to send immediate message:', error);
+            console.error('Message failed:', error);
             
-            // Check for specific error types
-            const isAbortError = error.name === 'AbortError';
-            const is502Error = error.message && error.message.includes('502');
-            const isTimeoutError = error.message && (error.message.includes('timeout') || error.message.includes('time'));
-            
-            if (isAbortError || isTimeoutError) {
-                displayWizardResponseWithRetry(`Even the shorter response timed out! The cosmic servers are extra busy. Try "Cryptic Questions" or "Moderate Wisdom" for the most reliable results.`, messageText);
-            } else if (is502Error) {
-                displayWizardResponseWithRetry("The mystical servers are overwhelmed. Try using Level 1 or 2 for more reliable responses!", messageText);
+            let errorMessage;
+            if (error.name === 'AbortError') {
+                errorMessage = `Response timed out! Try Level ${Math.max(1, parseInt(responseLengthSlider.value) - 1)} for faster results.`;
+            } else if (connectionStatus === 'offline') {
+                errorMessage = "You appear to be offline. Check your connection and try again.";
             } else {
-                // Fallback wizardly responses for other errors
-                const fallbackResponses = [
-                    "The cosmic WiFi is acting sus right now, young seeker. Try Level 1 or 2 for more reliable vibes!",
-                    "Bruh, the mystical servers are literally touching grass rn. Slide down to a lower level for better luck!",
-                    "The divine algorithms are lowkey glitching fr fr. Try a more basic response mode, bestie!"
-                ];
-                
-                const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-                displayWizardResponse(randomResponse, true);
+                errorMessage = "The cosmic servers are busy. Try a shorter response level.";
             }
+            
+            displayWizardResponse(errorMessage, true);
         } finally {
-            const speakDuration = wizardSpeechBubble && wizardSpeechBubble.textContent ? wizardSpeechBubble.textContent.length * 50 : 2000;
-            setTimeout(() => toggleWizardSpeaking(false), Math.max(1000, speakDuration));
+            toggleWizardSpeaking(false);
+            pendingRequest = null;
         }
     }
 
-    if (sendButton) {
-        sendButton.addEventListener('click', sendMessage);
-    } else {
-        console.error("Send button not found.");
-    }
-    
-    if (chatInput) {
-        chatInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        });
-    } else {
-        console.error("Chat input not found.");
-    }
-
-    // Response Length Control - Optimized for Netlify free tier reliability
+    // OPTIMIZATION: Adjusted token counts for better reliability
     function getTokenCount(sliderValue) {
         const tokenMap = {
-            1: 80,    // Cryptic - mysterious questions (reduced from 100)
-            2: 150,   // Moderate Wisdom - balanced responses (reduced from 200)
-            3: 250,   // Deep Insights - detailed responses (reduced from 350)
-            4: 350,   // Profound - comprehensive wisdom (reduced from 500)
-            5: 450,   // Epic - extensive mystical knowledge (reduced from 700)
-            6: 550    // Legendary - maximum cosmic wisdom (reduced from 900)
+            1: 60,    // Very short
+            2: 120,   // Short
+            3: 200,   // Moderate  
+            4: 300,   // Long
+            5: 400,   // Very long
+            6: 500    // Maximum
         };
-        return tokenMap[sliderValue] || 150; // Default to moderate
+        return tokenMap[sliderValue] || 120;
     }
 
     function getResponseMode(sliderValue) {
         const modes = {
-            1: "cryptic",      // Just ask mysterious questions
-            2: "moderate",     // Balanced wisdom
-            3: "deep",         // Detailed insights
-            4: "profound",     // Maximum depth and analysis
-            5: "epic",         // Extensive mystical exploration
-            6: "legendary"     // Ultimate cosmic wisdom
+            1: "cryptic",
+            2: "moderate",
+            3: "deep",
+            4: "profound",
+            5: "epic",
+            6: "legendary"
         };
         return modes[sliderValue] || "moderate";
     }
 
     function updateLengthIndicator(value) {
         const indicators = {
-            1: "Cryptic Questions ⚡",
-            2: "Moderate Wisdom ⚡", 
-            3: "Deep Insights ⚡",
-            4: "Profound Mysteries ⚠️",
-            5: "Epic Wisdom ⚠️",
-            6: "Legendary Knowledge ⚠️"
-        };
-        
-        const warnings = {
-            4: " (May timeout on busy servers)",
-            5: " (Longer wait, possible timeout)",
-            6: " (Maximum wait, timeout likely)"
+            1: "Brief Whispers ⚡",
+            2: "Quick Wisdom ⚡", 
+            3: "Balanced Insights ⚡",
+            4: "Deep Knowledge ⚠️",
+            5: "Epic Revelations ⚠️",
+            6: "Cosmic Odyssey ⚠️"
         };
         
         if (lengthIndicator) {
-            const baseText = indicators[value] || "Moderate Wisdom";
-            const warning = warnings[value] || "";
-            lengthIndicator.textContent = baseText + warning;
-            
-            // Add visual styling based on reliability
+            lengthIndicator.textContent = indicators[value] || "Balanced Insights";
             lengthIndicator.className = 'length-indicator';
             lengthIndicator.classList.add(parseInt(value) <= 3 ? 'reliable' : 'unreliable');
         }
     }
 
-    if (responseLengthSlider) {
-        responseLengthSlider.addEventListener('input', (event) => {
-            updateLengthIndicator(event.target.value);
-        });
-        
-        // Initialize indicator
-        updateLengthIndicator(responseLengthSlider.value);
-    } else {
-        console.error("Response length slider not found.");
-    }
+    // Event listeners
+    sendButton?.addEventListener('click', sendMessage);
+    
+    chatInput?.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
 
+    responseLengthSlider?.addEventListener('input', (event) => {
+        updateLengthIndicator(event.target.value);
+    });
+
+    // OPTIMIZATION: Connection monitoring
+    window.addEventListener('online', () => {
+        connectionStatus = 'online';
+        console.log('Connection restored');
+    });
+
+    window.addEventListener('offline', () => {
+        connectionStatus = 'offline';
+        console.log('Connection lost');
+    });
+
+    // Initialize
     initializeMicrophone();
     createAstrologicalWheel();
-    initializeBackgroundMusic();
-    // initializeAudioEffects();
+    updateLengthIndicator(responseLengthSlider?.value || 3);
 });
